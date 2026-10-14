@@ -1,1 +1,68 @@
-
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PrijsJager - Slim prijzen vergelijken</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f4f6fa; color: #17243a; }
+    header { background: #143b82; color: white; padding: 24px 18px; text-align: center; }
+    header h1 { margin: 0; font-size: 32px; }
+    header p { margin-bottom: 0; }
+    main { max-width: 1000px; margin: auto; padding: 24px 16px; }
+    .search { display: flex; gap: 8px; margin: 20px 0; }
+    input { flex: 1; min-width: 0; padding: 14px; border: 1px solid #ccd3df; border-radius: 8px; font-size: 16px; }
+    button { padding: 12px 18px; border: 0; border-radius: 8px; background: #ff9f1c; font-weight: bold; cursor: pointer; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 16px; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px #0001; }
+    .card h3 { margin-top: 0; }
+    .card a { color: #143b82; font-weight: bold; }
+    .notice { color: #536078; font-size: 14px; }
+    footer { padding: 25px; text-align: center; color: #536078; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PrijsJager</h1>
+    <p>Vergelijk slim. Betaal minder.</p>
+  </header>
+  <main>
+    <h2>Vind de beste aanbieding</h2>
+    <div class="search">
+      <input id="zoek" placeholder="Zoek een product..." aria-label="Zoek een product">
+      <button onclick="zoeken()">Zoeken</button>
+    </div>
+    <h2>Productcategorieën</h2>
+    <div class="grid" id="producten">
+      <div class="card" data-name="smartphones telefoons">
+        <h3>📱 Smartphones</h3>
+        <p>Vergelijk telefoons en abonnementen.</p>
+      </div>
+      <div class="card" data-name="laptops computers">
+        <h3>💻 Laptops</h3>
+        <p>Ontdek aanbiedingen voor computers.</p>
+      </div>
+      <div class="card" data-name="televisies tv">
+        <h3>📺 Televisies</h3>
+        <p>Zoek de beste prijs voor een televisie.</p>
+      </div>
+      <div class="card" data-name="elektronica accessoires">
+        <h3>🎧 Elektronica</h3>
+        <p>Vergelijk elektronica en accessoires.</p>
+      </div>
+    </div>
+    <p class="notice">Dit is de eerste testversie. Actuele prijzen en aanbiedingen worden later toegevoegd via aangesloten winkels en productfeeds.</p>
+    <p class="notice">PrijsJager kan affiliate-links bevatten. Bij een aankoop via zo'n link kunnen wij een commissie ontvangen.</p>
+  </main>
+  <footer>© 2026 PrijsJager</footer>
+  <script>
+    function zoeken() {
+      const term = document.getElementById('zoek').value.toLowerCase().trim();
+      document.querySelectorAll('.card').forEach(card => {
+        card.style.display = card.dataset.name.includes(term) ? '' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>
