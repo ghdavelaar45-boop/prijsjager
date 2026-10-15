@@ -1,92 +1,48 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="PrijsJager: vergelijk slim en ontdek aanbiedingen voor elektronica.">
-  <title>PrijsJager – Vergelijk slim. Betaal minder.</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; background: #f4f5f9; color: #1e293b; }
-    header { background: #1c4285; color: white; text-align: center; padding: 28px 16px; }
-    header h1 { font-size: 36px; margin: 0 0 12px; }
-    header p { font-size: 19px; margin: 0; }
-    main { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
-    h2 { font-size: 28px; margin: 10px 0 24px; }
-    .search { display: flex; gap: 10px; margin-bottom: 30px; }
-    .search input { flex: 1; min-width: 0; padding: 15px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 17px; }
-    .search button { border: 0; background: #ff9e1b; color: #111827; font-weight: bold; font-size: 16px; padding: 14px 20px; border-radius: 10px; cursor: pointer; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
-    .card { background: white; padding: 24px; border-radius: 16px; box-shadow: 0 3px 12px rgba(0,0,0,.06); }
-    .card h3 { margin: 0 0 18px; font-size: 22px; }
-    .card p { line-height: 1.5; margin: 0 0 10px; }
-    .notice { color: #596579; line-height: 1.5; margin-top: 24px; }
-    #geen-resultaten { display: none; color: #596579; }
-    footer { text-align: center; padding: 38px 20px; color: #596579; }
-    @media (max-width: 500px) { .search input { width: 100%; } .search button { padding: 12px 16px; } }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>PrijsJager</h1>
-    <p>Vergelijk slim. Betaal minder.</p>
-  </header>
-  <main>
-    <h2>Vind de beste aanbieding</h2>
-    <form class="search" id="zoekformulier">
-      <input id="zoek" type="search" placeholder="Zoek een product..." aria-label="Zoek een product">
-      <button type="submit">Zoeken</button>
-    </form>
-    <h2>Productcategorieën</h2>
-    <div class="grid" id="producten">
-      <div class="card" data-name="smartphones telefoons mobiel abonnementen">
-        <h3>📱 Smartphones</h3>
-        <p>Vergelijk telefoons en abonnementen.</p>
-      </div>
-      <div class="card" data-name="samsung galaxy smartphone telefoon">
-        <h3>📱 Samsung Galaxy</h3>
-        <p>Ontdek binnenkort Samsung Galaxy-aanbiedingen.</p>
-        <p>Prijzen en aangesloten winkels worden nog toegevoegd.</p>
-      </div>
-      <div class="card" data-name="laptops computers notebook">
-        <h3>💻 Laptops</h3>
-        <p>Ontdek aanbiedingen voor computers.</p>
-      </div>
-      <div class="card" data-name="televisies tv beeldscherm">
-        <h3>📺 Televisies</h3>
-        <p>Zoek de beste prijs voor een televisie.</p>
-      </div>
-      <div class="card" data-name="elektronica accessoires koptelefoon">
-        <h3>🎧 Elektronica</h3>
-        <p>Vergelijk elektronica en accessoires.</p>
-      </div>
-    </div>
-    <p id="geen-resultaten">Geen categorie gevonden. Probeer een andere zoekterm.</p>
-    <p class="notice">Dit is de eerste testversie. Actuele prijzen en aanbiedingen worden later toegevoegd via aangesloten winkels en productfeeds.</p>
-    <p class="notice">PrijsJager kan affiliate-links bevatten. Bij een aankoop via zo'n link kunnen wij een commissie ontvangen.</p>
-  </main>
-  <footer>© 2026 PrijsJager</footer>
-  <script>
-    const formulier = document.getElementById('zoekformulier');
-    const zoekveld = document.getElementById('zoek');
-    const kaarten = document.querySelectorAll('.card');
-    const geenResultaten = document.getElementById('geen-resultaten');
-    function zoeken() {
-      const term = zoekveld.value.trim().toLowerCase();
-      let aantal = 0;
-      kaarten.forEach(function(kaart) {
-        const tekst = (kaart.dataset.name + ' ' + kaart.textContent).toLowerCase();
-        const zichtbaar = !term || tekst.includes(term);
-        kaart.style.display = zichtbaar ? '' : 'none';
-        if (zichtbaar) aantal++;
-      });
-      geenResultaten.style.display = aantal ? 'none' : 'block';
-    }
-    formulier.addEventListener('submit', function(event) {
-      event.preventDefault();
-      zoeken();
-    });
-    zoekveld.addEventListener('input', zoeken);
-  </script>
-</body>
-</html>
+<!doctype html>
+<html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#143b82"><meta name="description" content="PrijsJager helpt je overzichtelijk producten te zoeken en te vergelijken. Voorbeeldproducten zijn duidelijk gemarkeerd."><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23143b82%22/%3E%3Ccircle%20cx%3D%2226%22%20cy%3D%2225%22%20r%3D%2215%22%20fill%3D%22none%22%20stroke%3D%22%23ff9d16%22%20stroke-width%3D%226%22/%3E%3Cpath%20d%3D%22M38%2038%2054%2054%22%20stroke%3D%22%23ff9d16%22%20stroke-width%3D%227%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E"><title>PrijsJager – Vergelijk slim. Betaal minder.</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#17243a;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}a{color:#164fa7}.wrap{max-width:1160px;margin:auto;padding:0 20px}.top{background:#143b82;color:white}.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0;flex-wrap:wrap}.brand{font-weight:900;font-size:29px;letter-spacing:-1px}.brand span{color:#ffb02d}.navlinks{display:flex;gap:18px;align-items:center}.navlinks a{color:white;text-decoration:none;font-weight:bold}.hero{padding:48px 0 60px;background:linear-gradient(120deg,#143b82,#2266b8);color:white}.hero h1{font-size:clamp(31px,5vw,54px);max-width:730px;margin:0 0 14px;line-height:1.12}.hero p{font-size:18px;line-height:1.55;max-width:720px}.searchbar{display:flex;gap:9px;background:white;padding:8px;border-radius:16px;max-width:780px;box-shadow:0 8px 28px #001c4b35}.searchbar input{border:0;outline:0;padding:13px;flex:1;min-width:0}.primary{background:#ff9d16;color:#18243a;border:0;padding:13px 22px;border-radius:10px;font-weight:800}.notice{background:#fff8e9;border:1px solid #f3d69e;border-radius:12px;padding:13px 17px;margin:23px 0;color:#624a20;line-height:1.5}.section{padding:24px 0}.section h2{font-size:26px;margin:0 0 16px}.categories{display:flex;gap:9px;overflow:auto;padding-bottom:9px}.chip{white-space:nowrap;border:1px solid #d3dce9;background:white;border-radius:999px;padding:11px 17px;color:#263954}.chip.active{background:#143b82;color:white;border-color:#143b82}.toolbar{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:14px 0 19px}.toolbar select{border:1px solid #cad5e5;border-radius:10px;padding:11px;background:white;color:#17243a}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:17px}.product{background:white;border:1px solid #e1e7f0;border-radius:17px;padding:18px;box-shadow:0 4px 15px #15345b0c;display:flex;flex-direction:column;gap:11px}.visual{height:130px;display:grid;place-items:center;font-size:72px;background:linear-gradient(135deg,#edf4ff,#f7f9fd);border-radius:13px}.tag{display:inline-block;background:#eaf2ff;color:#194b8d;font-size:12px;padding:5px 9px;border-radius:7px;font-weight:bold;align-self:flex-start}.product h3{font-size:18px;margin:0}.muted{color:#5b6879;line-height:1.5}.price{font-weight:800;font-size:24px}.actions{display:flex;gap:8px;margin-top:auto;flex-wrap:wrap}.secondary{border:1px solid #cdd9e8;background:white;color:#163d7a;padding:10px 12px;border-radius:9px;font-weight:bold}.secondary[aria-pressed=true]{background:#e4efff;border-color:#3973be}.empty{padding:35px;text-align:center;background:white;border-radius:15px}.compare{position:sticky;bottom:12px;z-index:3;background:#102f65;color:white;padding:14px 18px;border-radius:14px;box-shadow:0 8px 35px #001e4b55;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:24px auto}.compare button{background:#ff9d16;border:0;padding:10px 15px;border-radius:8px;font-weight:bold}.panel{background:white;border:1px solid #e1e7f0;border-radius:16px;padding:23px;margin:16px 0;line-height:1.65}.comparison{overflow-x:auto}.comparison table{width:100%;border-collapse:collapse;min-width:550px}.comparison td,.comparison th{padding:13px;border-bottom:1px solid #e1e7f0;text-align:left}.footer{background:#102849;color:#e5ebf6;padding:30px 0;margin-top:36px}.footer a{color:#e5ebf6}.footlinks{display:flex;gap:17px;flex-wrap:wrap;margin-top:14px}.hidden{display:none!important}.small{font-size:13px}.count{font-weight:bold;color:#38577e}@media(max-width:600px){.hero{padding:34px 0 42px}.brand{font-size:26px}.navlinks{font-size:14px}.searchbar{gap:5px}.searchbar input{padding:10px;width:100px}.primary{padding:12px 15px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.product{padding:11px}.visual{height:95px;font-size:49px}.product h3{font-size:15px}.price{font-size:19px}.actions button{flex:1;font-size:12px;padding:9px 6px}.wrap{padding:0 14px}.panel{padding:17px}}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #ff9d16;outline-offset:3px}.utility{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 22px}.utility button{font-size:14px}.status{font-size:13px;color:#31527c}.product .price{margin-top:auto}@media(max-width:600px){.grid{grid-template-columns:1fr 1fr}.toolbar>div{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.navlinks{gap:10px}}@media(max-width:370px){.grid{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+.top{position:sticky;top:0;z-index:20;box-shadow:0 3px 12px #091b3550}.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:#fff;letter-spacing:-.7px}.brandmark{height:48px;width:48px;flex-shrink:0}.brandname{display:flex;flex-direction:column;line-height:1.1}.brandname small{font-size:10px;font-weight:600;letter-spacing:.5px;color:#d9e8ff;margin-top:5px}.footerbrand{display:inline-flex;align-items:center;gap:7px;color:#fff!important;text-decoration:none}.footerbrand .brandmark{width:31px;height:31px}.footerbrand strong{font-size:20px}section[id]{scroll-margin-top:115px}@media(max-width:600px){.nav{padding:9px 0;gap:7px}.brandmark{height:37px;width:37px}.brand{font-size:23px}.navlinks{gap:9px;font-size:12px}.brandname small{font-size:8px}.navlinks a{white-space:nowrap}section[id]{scroll-margin-top:90px}}
+</style></head><body>
+<header class="top" id="top"><div class="wrap nav"><a class="brand" href="#top" aria-label="PrijsJager – terug naar boven"><svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><circle cx="27" cy="27" r="19" fill="#fff" stroke="#ff9d16" stroke-width="6"/><path d="m41 42 15 15" stroke="#fff" stroke-width="9" stroke-linecap="round"/><path d="m41 42 15 15" stroke="#ff9d16" stroke-width="6" stroke-linecap="round"/><path d="M14 17h5l4 19h19l5-13H21" fill="none" stroke="#143b82" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="41" r="2.6" fill="#143b82"/><circle cx="39" cy="41" r="2.6" fill="#143b82"/></svg><span class="brandname">Prijs<span>Jager</span><small>Vergelijk · Vind · Bespaar</small></span></a><nav class="navlinks"><a href="#producten">Producten</a><a href="#over">Over ons</a><a href="#contact">Contact</a></nav></div></header>
+<section class="hero"><div class="wrap"><h1>Vergelijk slim.<br>Betaal minder.</h1><p>Ontdek producten, bewaar je favorieten en vergelijk specificaties op één plek. We bereiden PrijsJager voor op aanbiedingen van aangesloten webwinkels.</p><form id="searchForm" class="searchbar" role="search"><input id="zoek" type="search" placeholder="Zoek bijvoorbeeld Samsung, laptop..." aria-label="Zoek producten"><button class="primary" type="submit">Zoeken</button></form></div></section>
+<main class="wrap"><div class="notice"><strong>Testversie:</strong> onderstaande producten en bedragen zijn <strong>demonstratiegegevens, geen actuele aanbiedingen</strong>. Er zijn nog geen live prijsfeeds of kooplinks aangesloten.</div>
+<section id="producten" class="section"><h2>Ontdek producten</h2><p class="muted">Vergelijk voorbeeldmodellen en ontdek welke eigenschappen voor jou belangrijk zijn. Productafbeeldingen zijn voorlopig pictogrammen.</p><div id="categories" class="categories" aria-label="Productcategorieën"></div><div class="toolbar"><span class="count" id="count"></span><div><label for="sort">Sorteren: </label><select id="sort"><option value="popular">Aanbevolen</option><option value="asc">Demo-prijs: laag naar hoog</option><option value="desc">Demo-prijs: hoog naar laag</option><option value="az">Naam A–Z</option></select> <button class="secondary" id="favFilter" aria-pressed="false">♡ Favorieten</button></div></div><div id="grid" class="grid" aria-live="polite"></div><div id="empty" class="empty hidden">Geen producten gevonden. Probeer een andere zoekterm of categorie.</div><div class="utility"><button type="button" class="secondary" id="resetFilters">↺ Alle filters wissen</button><button type="button" class="secondary" id="shareSite">↗ Deel PrijsJager</button><span id="shareStatus" class="status" role="status" aria-live="polite"></span></div></section>
+<div id="compareBar" class="compare hidden"><span id="compareCount"></span><div><button id="showCompare">Vergelijken</button> <button id="clearCompare" class="secondary">Wissen</button></div></div><section id="comparison" class="panel hidden"><h2>Productvergelijking</h2><p class="muted">Dit zijn voorbeeldspecificaties en demo-prijzen, geen actuele winkelinformatie.</p><div id="compareTable" class="comparison"></div></section>
+<section id="over" class="panel"><h2>Over PrijsJager</h2><p>PrijsJager is een Nederlandse website in ontwikkeling voor het overzichtelijk vergelijken van producten en aanbiedingen. De website is nu een werkende demonstratie: zoeken, filteren, sorteren, favorieten en vergelijken functioneren. Live winkelprijzen worden pas getoond wanneer betrouwbare productfeeds beschikbaar zijn.</p><p>PrijsJager kan in de toekomst affiliate-links bevatten. Als je via zo'n link iets koopt, kunnen wij een commissie ontvangen. Dit kost jou doorgaans niets extra.</p></section>
+<section id="contact" class="panel"><h2>Contact en informatie</h2><p>Heb je een vraag of wil je een fout melden? Een contactadres wordt toegevoegd voordat de website officieel als vergelijkingsdienst wordt gelanceerd.</p><details><summary><strong>Privacyverklaring (testversie)</strong></summary><p>Deze demonstratie gebruikt geen eigen server om persoonsgegevens te verzamelen. Zoekopdrachten blijven in je browser. Favorieten worden alleen lokaal op je apparaat opgeslagen via localStorage. Er zijn in deze versie geen analytics, advertentiescripts of affiliate-trackingcodes opgenomen. De hostingprovider kan technisch noodzakelijke serverlogs verwerken volgens het eigen privacybeleid. Bij toevoeging van externe diensten wordt deze verklaring bijgewerkt.</p></details><details><summary><strong>Affiliate-vermelding</strong></summary><p>Wanneer affiliate-links worden toegevoegd, kan PrijsJager commissie ontvangen bij een aankoop via zo'n link. De demo bevat nog geen affiliate-links.</p></details><details><summary><strong>Disclaimer</strong></summary><p>Alle bedragen en productspecificaties op deze testpagina zijn fictieve demonstratiegegevens. Controleer later bij de verkoper altijd de actuele prijs, beschikbaarheid, verzendkosten en voorwaarden. Deze testversie biedt nog geen werkende prijsvergelijking tussen winkels.</p></details></section></main>
+<footer class="footer"><div class="wrap"><a class="footerbrand" href="#top"><svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><circle cx="27" cy="27" r="19" fill="#fff" stroke="#ff9d16" stroke-width="6"/><path d="m41 42 15 15" stroke="#fff" stroke-width="9" stroke-linecap="round"/><path d="m41 42 15 15" stroke="#ff9d16" stroke-width="6" stroke-linecap="round"/><path d="M14 17h5l4 19h19l5-13H21" fill="none" stroke="#143b82" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="41" r="2.6" fill="#143b82"/><circle cx="39" cy="41" r="2.6" fill="#143b82"/></svg><strong>PrijsJager</strong></a> — Vergelijk slim. Betaal minder.<div class="footlinks"><a href="#producten">Producten</a><a href="#over">Over PrijsJager</a><a href="#contact">Privacy en contact</a></div><p class="small">© <span id="year"></span> PrijsJager · Testversie</p></div></footer>
+<script>
+'use strict';
+const products=[
+{id:1,name:'Samsung Galaxy S-serie',cat:'Smartphones',icon:'📱',price:799,desc:'Voorbeeld van een premium Android-smartphone.',spec:'Android · OLED · 5G'},
+{id:2,name:'Samsung Galaxy A-serie',cat:'Smartphones',icon:'📱',price:329,desc:'Voorbeeld van een veelzijdige smartphone.',spec:'Android · 5G · Dual SIM'},
+{id:3,name:'Google Pixel-serie',cat:'Smartphones',icon:'📱',price:599,desc:'Voorbeeld van een smartphone met slimme camera.',spec:'Android · OLED · 5G'},
+{id:4,name:'Apple iPhone-serie',cat:'Smartphones',icon:'📱',price:899,desc:'Voorbeeld van een iOS-smartphone.',spec:'iOS · OLED · 5G'},
+{id:5,name:'Lenovo IdeaPad-serie',cat:'Laptops',icon:'💻',price:649,desc:'Voorbeeld van een laptop voor dagelijks gebruik.',spec:'15 inch · 16 GB RAM · SSD'},
+{id:6,name:'ASUS Vivobook-serie',cat:'Laptops',icon:'💻',price:729,desc:'Voorbeeld van een laptop voor studie en werk.',spec:'14 inch · 16 GB RAM · SSD'},
+{id:7,name:'Samsung OLED-tv-serie',cat:'Televisies',icon:'📺',price:1199,desc:'Voorbeeld van een OLED-televisie.',spec:'55 inch · 4K · Smart TV'},
+{id:8,name:'LG UHD-tv-serie',cat:'Televisies',icon:'📺',price:549,desc:'Voorbeeld van een 4K-televisie.',spec:'50 inch · 4K · Smart TV'},
+{id:9,name:'Sony draadloze koptelefoon',cat:'Audio',icon:'🎧',price:229,desc:'Voorbeeld van een noise-cancelling koptelefoon.',spec:'Bluetooth · ANC · USB-C'},
+{id:10,name:'JBL bluetoothspeaker',cat:'Audio',icon:'🔊',price:119,desc:'Voorbeeld van een draagbare speaker.',spec:'Bluetooth · Oplaadbaar'},
+{id:11,name:'DJI cameradrone-serie',cat:'Elektronica',icon:'🚁',price:699,desc:'Voorbeeld van een compacte cameradrone.',spec:'Camera · GPS · Accu'},
+{id:12,name:'Garmin smartwatch-serie',cat:'Elektronica',icon:'⌚',price:299,desc:'Voorbeeld van een sporthorloge.',spec:'GPS · Hartslag · Bluetooth'},
+{id:13,name:'Samsung Galaxy Tab-serie',cat:'Elektronica',icon:'📲',price:399,desc:'Voorbeeld van een Android-tablet.',spec:'Android · Wi-Fi · Touchscreen'},
+{id:14,name:'Apple iPad-serie',cat:'Elektronica',icon:'📲',price:449,desc:'Voorbeeld van een tablet.',spec:'iPadOS · Wi-Fi · Touchscreen'},
+{id:15,name:'HP Pavilion-serie',cat:'Laptops',icon:'💻',price:699,desc:'Voorbeeld van een laptop voor thuisgebruik.',spec:'SSD · Wi-Fi · Webcam'},
+{id:16,name:'Acer Aspire-serie',cat:'Laptops',icon:'💻',price:579,desc:'Voorbeeld van een betaalbare laptop.',spec:'SSD · Wi-Fi · Webcam'},
+{id:17,name:'Philips Ambilight-tv-serie',cat:'Televisies',icon:'📺',price:849,desc:'Voorbeeld van een slimme televisie.',spec:'4K · Smart TV · Ambilight'},
+{id:18,name:'Bose draadloze oordopjes',cat:'Audio',icon:'🎧',price:199,desc:'Voorbeeld van draadloze oordopjes.',spec:'Bluetooth · Oplaadcase'},
+{id:19,name:'DJI Mini-drone-serie',cat:'Elektronica',icon:'🚁',price:449,desc:'Voorbeeld van een lichte cameradrone.',spec:'GPS · Camera · Accu'},
+{id:20,name:'Sony bluetoothspeaker',cat:'Audio',icon:'🔊',price:139,desc:'Voorbeeld van een draagbare luidspreker.',spec:'Bluetooth · USB-C'}
+];
+const cats=['Alles','Smartphones','Laptops','Televisies','Audio','Elektronica'];
+const $=id=>document.getElementById(id);let category='Alles',onlyFav=false,compare=[];const key='prijsjager-favorieten-v1';let fav=[];try{const stored=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(stored))fav=stored.filter(Number.isInteger)}catch(e){};
+function save(){try{localStorage.setItem(key,JSON.stringify(fav))}catch(e){}}
+function euro(n){return new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(n)}
+function renderCats(){$('categories').innerHTML='';cats.forEach(c=>{let b=document.createElement('button');b.className='chip'+(c===category?' active':'');b.textContent=c;b.setAttribute('aria-pressed',String(c===category));b.onclick=()=>{category=c;renderCats();render()};$('categories').append(b)})}
+function render(){let q=$('zoek').value.trim().toLocaleLowerCase('nl');let list=products.filter(p=>(category==='Alles'||p.cat===category)&&(!onlyFav||fav.includes(p.id))&&(!q||[p.name,p.cat,p.desc,p.spec].join(' ').toLocaleLowerCase('nl').includes(q)));let sort=$('sort').value;if(sort==='asc')list.sort((a,b)=>a.price-b.price);if(sort==='desc')list.sort((a,b)=>b.price-a.price);if(sort==='az')list.sort((a,b)=>a.name.localeCompare(b.name,'nl'));$('count').textContent=list.length+' voorbeeldproducten';$('grid').innerHTML='';$('empty').classList.toggle('hidden',list.length!==0);list.forEach(p=>{let card=document.createElement('article');card.className='product';let v=document.createElement('div');v.className='visual';v.textContent=p.icon;v.setAttribute('aria-hidden','true');card.append(v);let tag=document.createElement('span');tag.className='tag';tag.textContent=p.cat;card.append(tag);let title=document.createElement('h3');title.textContent=p.name;card.append(title);let desc=document.createElement('div');desc.className='muted small';desc.textContent=p.desc;card.append(desc);let spec=document.createElement('div');spec.className='muted small';spec.textContent=p.spec;card.append(spec);let price=document.createElement('div');price.className='price';price.textContent=euro(p.price);card.append(price);let label=document.createElement('div');label.className='muted small';label.textContent='Demo-prijs · niet actueel';card.append(label);let actions=document.createElement('div');actions.className='actions';let f=document.createElement('button');f.className='secondary';f.textContent=fav.includes(p.id)?'♥ Bewaard':'♡ Bewaar';f.setAttribute('aria-pressed',String(fav.includes(p.id)));f.onclick=()=>{fav=fav.includes(p.id)?fav.filter(id=>id!==p.id):[...fav,p.id];save();render()};let c=document.createElement('button');c.className='secondary';c.textContent=compare.includes(p.id)?'✓ Gekozen':'+ Vergelijk';c.setAttribute('aria-pressed',String(compare.includes(p.id)));c.onclick=()=>{if(compare.includes(p.id))compare=compare.filter(id=>id!==p.id);else if(compare.length<3)compare.push(p.id);else{alert('Je kunt maximaal 3 producten tegelijk vergelijken.');return}render()};actions.append(f,c);card.append(actions);$('grid').append(card)});$('compareBar').classList.toggle('hidden',compare.length===0);$('compareCount').textContent=compare.length+' van 3 producten geselecteerd';if(compare.length===0)$('comparison').classList.add('hidden');else if(!$('comparison').classList.contains('hidden'))renderComparison()}
+function renderComparison(){const selected=compare.map(id=>products.find(p=>p.id===id)).filter(Boolean);const table=document.createElement('table');const rows=[['Eigenschap',...selected.map(p=>p.name)],['Categorie',...selected.map(p=>p.cat)],['Demo-prijs',...selected.map(p=>euro(p.price))],['Voorbeeldspecificaties',...selected.map(p=>p.spec)]];rows.forEach((row,i)=>{let tr=document.createElement('tr');row.forEach(v=>{let cell=document.createElement(i===0?'th':'td');cell.textContent=v;tr.append(cell)});table.append(tr)});$('compareTable').replaceChildren(table)}
+$('searchForm').onsubmit=e=>{e.preventDefault();$('producten').scrollIntoView({behavior:'smooth'});render()};$('zoek').addEventListener('input',render);$('sort').addEventListener('change',render);$('favFilter').onclick=()=>{onlyFav=!onlyFav;$('favFilter').setAttribute('aria-pressed',String(onlyFav));render()};$('showCompare').onclick=()=>{$('comparison').classList.remove('hidden');renderComparison();$('comparison').scrollIntoView({behavior:'smooth'})};$('clearCompare').onclick=()=>{compare=[];render()};$('resetFilters').onclick=()=>{$('zoek').value='';$('sort').value='popular';category='Alles';onlyFav=false;$('favFilter').setAttribute('aria-pressed','false');renderCats();render();$('producten').scrollIntoView({behavior:'smooth'})};$('shareSite').onclick=async()=>{const url='https://prijsjager-nl.nl/';try{if(navigator.share){await navigator.share({title:'PrijsJager',url})}else if(navigator.clipboard){await navigator.clipboard.writeText(url);$('shareStatus').textContent='Link gekopieerd'}else{$('shareStatus').textContent='Deel deze link: '+url}}catch(e){if(e.name!=='AbortError')$('shareStatus').textContent='Deel deze link: '+url}}};$('year').textContent=new Date().getFullYear();renderCats();render();
+</script></body></html>
