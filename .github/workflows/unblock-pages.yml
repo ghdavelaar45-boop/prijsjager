@@ -1,0 +1,19 @@
+name: Herstel vastgelopen Pages-publicatie
+on:
+  push:
+    paths:
+      - '.github/workflows/unblock-pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+jobs:
+  unblock:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Annuleer de vastgelopen Pages-publicatie
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/deployments/8b690f078e903ce9587956b74946aa0a08ba3498/cancel" --silent
+          echo "Annuleringsverzoek verstuurd."
