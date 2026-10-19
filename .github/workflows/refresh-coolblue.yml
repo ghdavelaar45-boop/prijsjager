@@ -1,6 +1,11 @@
 name: Refresh Coolblue prices
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/update-coolblue-prices.py
+      - .github/workflows/refresh-coolblue.yml
   schedule:
     - cron: '23 */6 * * *'
 permissions:
