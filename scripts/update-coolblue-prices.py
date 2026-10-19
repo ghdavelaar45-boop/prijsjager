@@ -16,6 +16,24 @@ def check_url(url):
     u = urlparse(url)
     if u.scheme != 'https' or u.hostname not in ALLOWED or u.username or u.password:
         raise ValueError('Unsupported feed host')
+def configured_feed_url(url):
+    """Request the validation columns without logging or changing the feed key."""
+    url = url.strip()
+    check_url(url)
+    u = urlparse(url)
+    parts = u.path.split('/')
+    if u.hostname == 'productdata.awin.com' and u.path.startswith('/datafeed/download/'):
+        if 'columns' not in parts:
+            raise ValueError('Missing required feed columns')
+        pos = parts.index('columns') + 1
+        if pos >= len(parts):
+            raise ValueError('Missing required feed columns')
+        columns = [x for x in parts[pos].split(',') if x]
+        for name in ['merchant_id','merchant_product_id','merchant_deep_link','search_price','currency','condition','in_stock','stock_status','delivery_cost','ean']:
+            if name not in columns: columns.append(name)
+        parts[pos] = ','.join(columns)
+        return u._replace(path='/'.join(parts)).geturl()
+    return url
 def money(value):
     try:
         n = Decimal(value)
@@ -50,7 +68,7 @@ def main():
     try:
         if a.feed_file: raw=Path(a.feed_file).read_bytes()
         else:
-            url=os.environ.get('AWIN_COOLBLUE_FEED_URL','');check_url(url)
+            url=configured_feed_url(os.environ.get('AWIN_COOLBLUE_FEED_URL',''))
             stage='feed download'
             with build_opener(SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder feed updater'}),timeout=90) as response: raw=response.read(60000001)
         if len(raw)>60000000: raise ValueError('Feed too large')
