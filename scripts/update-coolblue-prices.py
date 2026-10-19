@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from urllib.parse import urlparse
+from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request, HTTPRedirectHandler, build_opener
 
 ALLOWED = {'productdata.awin.com', 'ui.awin.com'}
@@ -45,14 +46,22 @@ def build(raw, html, now=None):
     return {'schema':1,'merchant':'Coolblue','merchantId':'85161','fetchedAt':(now or datetime.now(timezone.utc)).isoformat(),'maxAgeHours':48,'prices':dict(sorted(result.items()))}
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--feed-file');ap.add_argument('--html',default='index.html');ap.add_argument('--output',default='coolblue-prices.json');a=ap.parse_args()
+    stage='feed configuration'
     try:
         if a.feed_file: raw=Path(a.feed_file).read_bytes()
         else:
             url=os.environ.get('AWIN_COOLBLUE_FEED_URL','');check_url(url)
+            stage='feed download'
             with build_opener(SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder feed updater'}),timeout=90) as response: raw=response.read(60000001)
         if len(raw)>60000000: raise ValueError('Feed too large')
+        stage='feed validation'
         data=build(raw,Path(a.html).read_text());target=Path(a.output);tmp=target.with_suffix('.tmp');tmp.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':'))+'\n');tmp.replace(target)
         print('Published',len(data['prices']),'exact Coolblue prices')
-    except Exception:
-        print('Price refresh failed; previous data retained. Feed URLs are never logged.',file=sys.stderr);sys.exit(1)
+    except Exception as exc:
+        safe_reasons={'Unsupported feed host','Missing required feed columns','Feed incomplete or no exact matches','Feed too large'}
+        if isinstance(exc, HTTPError): reason='HTTP status '+str(exc.code)
+        elif isinstance(exc, ValueError) and str(exc) in safe_reasons: reason=str(exc)
+        elif isinstance(exc, URLError): reason='Network connection failed'
+        else: reason=type(exc).__name__
+        print('Price refresh failed at '+stage+': '+reason+'. Previous data retained. Feed URLs are never logged.',file=sys.stderr);sys.exit(1)
 if __name__=='__main__': main()
