@@ -1,0 +1,47 @@
+name: Refresh Coolblue prices
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 */6 * * *'
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: coolblue-prices
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check feed configuration
+        id: config
+        env:
+          FEED: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
+        run: |
+          if [ -n "$FEED" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Configure AWIN_COOLBLUE_FEED_URL in repository Actions secrets to enable automatic prices." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Refresh exact Coolblue prices
+        if: steps.config.outputs.ready == 'true'
+        env:
+          AWIN_COOLBLUE_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
+        run: python3 scripts/update-coolblue-prices.py
+      - name: Publish price snapshot
+        if: steps.config.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add coolblue-prices.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Refresh Coolblue price snapshot"
+            git pull --rebase origin main
+            git push origin HEAD:main
+            gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" > /dev/null
+          fi
