@@ -1,0 +1,28 @@
+name: Security checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '**.html'
+      - 'scripts/**'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - '**.html'
+      - 'scripts/**'
+      - '.github/workflows/**'
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Verify Content Security Policy and feed validation
+        run: |
+          python3 scripts/update-security-policy.py --check
+          python3 scripts/test-security.py

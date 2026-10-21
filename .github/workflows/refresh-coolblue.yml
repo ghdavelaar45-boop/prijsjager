@@ -9,17 +9,25 @@ on:
   schedule:
     - cron: '23 */6 * * *'
 permissions:
-  contents: write
-  pages: write
+  contents: read
 concurrency:
   group: coolblue-prices
   cancel-in-progress: false
 jobs:
   refresh:
+    permissions:
+      contents: write
+      pages: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Verify website and feed security
+        run: |
+          python3 scripts/update-security-policy.py --check
+          python3 scripts/test-security.py
       - name: Check feed configuration
         id: config
         env:
@@ -41,12 +49,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add coolblue-prices.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Refresh Coolblue price snapshot"
-            git pull --rebase origin main
-            git push origin HEAD:main
-            gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" > /dev/null
+          if git diff --quiet -- coolblue-prices.json; then
+            exit 0
           fi
+          gh api "repos/$GITHUB_REPOSITORY/contents/coolblue-prices.json" > "$RUNNER_TEMP/snapshot-current.json"
+          python3 - <<'PYTHON'
+          import base64, json, os
+          from pathlib import Path
+          temp = Path(os.environ['RUNNER_TEMP'])
+          current = json.loads((temp / 'snapshot-current.json').read_text())
+          request = {
+              'message': 'Refresh Coolblue price snapshot',
+              'sha': current['sha'],
+              'content': base64.b64encode(Path('coolblue-prices.json').read_bytes()).decode(),
+              'branch': 'main',
+          }
+          (temp / 'snapshot-update.json').write_text(json.dumps(request))
+          PYTHON
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/coolblue-prices.json" --input "$RUNNER_TEMP/snapshot-update.json" > /dev/null
+          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" > /dev/null
