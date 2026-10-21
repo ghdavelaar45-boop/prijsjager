@@ -59,7 +59,7 @@ def build(raw, html, now=None):
         item={'price':price,'currency':'EUR','deliveryCost':money(r.get('delivery_cost','')),'inStock':True}
         image_url=(r.get('merchant_image_url') or '').strip()
         image=urlparse(image_url)
-        if image.scheme=='https' and image.hostname=='image.coolblue.nl' and not image.username and not image.password:
+        if image.scheme=='https' and image.hostname in {'image.coolblue.nl','coolblue.bynder.com'} and not image.username and not image.password:
             item['imageUrl']=image_url
         if pid in result and result[pid]!=item: conflicts.add(pid)
         result[pid]=item
