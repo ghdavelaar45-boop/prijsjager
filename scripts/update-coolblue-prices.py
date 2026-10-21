@@ -29,7 +29,7 @@ def configured_feed_url(url):
         if pos >= len(parts):
             raise ValueError('Missing required feed columns')
         columns = [x for x in parts[pos].split(',') if x]
-        for name in ['merchant_id','merchant_product_id','merchant_deep_link','search_price','currency','condition','in_stock','stock_status','delivery_cost','ean']:
+        for name in ['merchant_id','merchant_product_id','merchant_deep_link','search_price','currency','condition','in_stock','stock_status','delivery_cost','ean','merchant_image_url']:
             if name not in columns: columns.append(name)
         parts[pos] = ','.join(columns)
         return u._replace(path='/'.join(parts)).geturl()
@@ -57,11 +57,15 @@ def build(raw, html, now=None):
         price=money(r['search_price'])
         if r['currency']!='EUR' or r['condition'].lower()!='new' or r['in_stock']!='1' or price is None or price<=0: continue
         item={'price':price,'currency':'EUR','deliveryCost':money(r.get('delivery_cost','')),'inStock':True}
+        image_url=(r.get('merchant_image_url') or '').strip()
+        image=urlparse(image_url)
+        if image.scheme=='https' and image.hostname=='image.coolblue.nl' and not image.username and not image.password:
+            item['imageUrl']=image_url
         if pid in result and result[pid]!=item: conflicts.add(pid)
         result[pid]=item
     for pid in conflicts: result.pop(pid,None)
     if count<100 or not result: raise ValueError('Feed incomplete or no exact matches')
-    return {'schema':1,'merchant':'Coolblue','merchantId':'85161','fetchedAt':(now or datetime.now(timezone.utc)).isoformat(),'maxAgeHours':48,'prices':dict(sorted(result.items()))}
+    return {'schema':1,'imageSource':'Awin Coolblue productfeed','merchant':'Coolblue','merchantId':'85161','fetchedAt':(now or datetime.now(timezone.utc)).isoformat(),'maxAgeHours':48,'prices':dict(sorted(result.items()))}
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--feed-file');ap.add_argument('--html',default='index.html');ap.add_argument('--output',default='coolblue-prices.json');a=ap.parse_args()
     stage='feed configuration'
@@ -83,3 +87,4 @@ def main():
         else: reason=type(exc).__name__
         print('Price refresh failed at '+stage+': '+reason+'. Previous data retained. Feed URLs are never logged.',file=sys.stderr);sys.exit(1)
 if __name__=='__main__': main()
+
