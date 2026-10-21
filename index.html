@@ -327,7 +327,7 @@ async function loadCoolbluePrices(){
      // Only use the unmodified primary image delivered by this approved merchant's feed.
      // Multi-store cards retain the neutral placeholder until cross-store image use is approved.
      if(data.imageSource==='Awin Coolblue productfeed'&&offersOf(p).every(o=>{try{return ['coolblue.nl','www.coolblue.nl'].includes(new URL(o.url).hostname)}catch(e){return false}})&&typeof row.imageUrl==='string'){
-      try{const imageUrl=new URL(row.imageUrl);if(imageUrl.protocol==='https:'&&imageUrl.hostname==='image.coolblue.nl'&&!imageUrl.username&&!imageUrl.password){p.image=row.imageUrl;p.imageIsFeed=true;}}catch(e){}
+      try{const imageUrl=new URL(row.imageUrl);if(imageUrl.protocol==='https:'&&['image.coolblue.nl','coolblue.bynder.com'].includes(imageUrl.hostname)&&!imageUrl.username&&!imageUrl.password){p.image=row.imageUrl;p.imageIsFeed=true;}}catch(e){}
      }
      p.price=row.price;p.priceShop='Coolblue';p.priceFetchedAt=data.fetchedAt;matched++;
     }
