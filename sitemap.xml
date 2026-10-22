@@ -1,6 +1,36 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.prijsjager-nl.nl/</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=producten</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=keuzehulp</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=pastcheck</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=koopgids</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=werkwijze</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=over</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=contact</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/?pagina=accessoires</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/coolblue.html</loc>
+  </url>
+  <url>
+    <loc>https://www.prijsjager-nl.nl/accessoires.html</loc>
   </url>
 </urlset>
