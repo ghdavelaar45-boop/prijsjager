@@ -1,17 +1,18 @@
-name: Refresh Coolblue prices
+name: Refresh both shop catalogs and prices
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - scripts/update-coolblue-prices.py
+      - scripts/update-shop-catalogs.py
+      - scripts/publish-shop-catalogs.py
       - .github/workflows/refresh-coolblue.yml
   schedule:
     - cron: '23 */6 * * *'
 permissions:
   contents: read
 concurrency:
-  group: coolblue-prices
+  group: shop-catalogs
   cancel-in-progress: false
 jobs:
   refresh:
@@ -19,7 +20,7 @@ jobs:
       contents: write
       pages: write
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -28,43 +29,12 @@ jobs:
         run: |
           python3 scripts/update-security-policy.py --check
           python3 scripts/test-security.py
-      - name: Check feed configuration
-        id: config
+          python3 scripts/test-shop-catalogs.py
+      - name: Refresh Smartphonehoesjes and Coolblue catalogs
         env:
-          FEED: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
-        run: |
-          if [ -n "$FEED" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Configure AWIN_COOLBLUE_FEED_URL in repository Actions secrets to enable automatic prices." >> "$GITHUB_STEP_SUMMARY"
-          fi
-      - name: Refresh exact Coolblue prices
-        if: steps.config.outputs.ready == 'true'
-        env:
-          AWIN_COOLBLUE_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
-        run: python3 scripts/update-coolblue-prices.py
-      - name: Publish price snapshot
-        if: steps.config.outputs.ready == 'true'
+          AWIN_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
+        run: python3 scripts/update-shop-catalogs.py
+      - name: Publish validated catalogs atomically
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          if git diff --quiet -- coolblue-prices.json; then
-            exit 0
-          fi
-          gh api "repos/$GITHUB_REPOSITORY/contents/coolblue-prices.json" > "$RUNNER_TEMP/snapshot-current.json"
-          python3 - <<'PYTHON'
-          import base64, json, os
-          from pathlib import Path
-          temp = Path(os.environ['RUNNER_TEMP'])
-          current = json.loads((temp / 'snapshot-current.json').read_text())
-          request = {
-              'message': 'Refresh Coolblue price snapshot',
-              'sha': current['sha'],
-              'content': base64.b64encode(Path('coolblue-prices.json').read_bytes()).decode(),
-              'branch': 'main',
-          }
-          (temp / 'snapshot-update.json').write_text(json.dumps(request))
-          PYTHON
-          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/coolblue-prices.json" --input "$RUNNER_TEMP/snapshot-update.json" > /dev/null
-          gh api --method POST "repos/$GITHUB_REPOSITORY/pages/builds" > /dev/null
+        run: python3 scripts/publish-shop-catalogs.py
