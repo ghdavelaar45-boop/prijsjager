@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - scripts/update-shop-catalogs.py
+      - scripts/match-shop-products.py
       - scripts/publish-shop-catalogs.py
       - .github/workflows/refresh-coolblue.yml
   schedule:
@@ -30,6 +31,7 @@ jobs:
           python3 scripts/update-security-policy.py --check
           python3 scripts/test-security.py
           python3 scripts/test-shop-catalogs.py
+          python3 scripts/test-product-matches.py
       - name: Refresh Smartphonehoesjes, Coolblue and Acer catalogs
         env:
           AWIN_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
@@ -38,4 +40,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/publish-shop-catalogs.py
+
 

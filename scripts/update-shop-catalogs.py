@@ -7,7 +7,7 @@ from urllib.request import Request,build_opener
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('coolblue_prices',ROOT/'scripts/update-coolblue-prices.py');cb=importlib.util.module_from_spec(spec);spec.loader.exec_module(cb)
 SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphonehoesjes.nl'}},'coolblue':{'mid':'85161','fid':'96636','hosts':{'image.coolblue.nl','coolblue.bynder.com'}},'acer':{'mid':'17133','fid':'36289','hosts':{'static2-ecemea.acer.com'}}}
-COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url']
+COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url','ean','product_GTIN','upc','mpn']
 MAX_BYTES=160_000_000
 
 def acer_type(row):
@@ -90,10 +90,15 @@ def main():
    pending[shop]=build(raw,shop,stamp);raws[shop]=raw
   # Validate all downloads before changing any published catalog.
   prices=cb.build(raws['coolblue'],(ROOT/'index.html').read_text(),datetime.fromisoformat(stamp))
+  matcher_spec=importlib.util.spec_from_file_location('matcher',ROOT/'scripts/match-shop-products.py');matcher=importlib.util.module_from_spec(matcher_spec);matcher_spec.loader.exec_module(matcher)
+  matches=matcher.build({shop:read_rows(raw) for shop,raw in raws.items()},SHOPS,stamp)
   for shop,outputs in pending.items():write(outputs,shop);m=json.loads(outputs['manifest.json']);print(shop+': '+str(m['count'])+' products, '+str(m['withPrices'])+' prices, '+str(m['withImages'])+' photos')
   (ROOT/'coolblue-prices.json').write_text(json.dumps(prices,ensure_ascii=False,separators=(',',':'))+'\n')
+  (ROOT/'data/product-matches.json').write_text(json.dumps(matches,separators=(',',':'))+'\n')
+  print('Exact GTIN product groups across shops: '+str(len(matches['groups'])))
  except Exception as exc:
   safe={'Unsupported configured feed format','Feed too large','Missing feed columns','Too many products','Unexpected merchant','Unexpected affiliate link','Incomplete feed','Feed secret is not configured'}
   print('Catalog refresh failed: '+(str(exc) if isinstance(exc,ValueError) and str(exc) in safe else type(exc).__name__)+'. Existing published data retained. Private URLs are not logged.',file=sys.stderr);raise SystemExit(1)
 if __name__=='__main__':main()
+
 

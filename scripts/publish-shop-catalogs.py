@@ -10,8 +10,8 @@ def main():
  def call(path,payload=None,method=None):
   req=Request(api+path,data=json.dumps(payload).encode() if payload is not None else None,method=method or ('POST' if payload is not None else 'GET'),headers={'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'})
   with urlopen(req,timeout=60) as r:return json.load(r)
- files=[ROOT/'coolblue-prices.json']+sorted((ROOT/'data/smartphonehoesjes').glob('*'))+sorted((ROOT/'data/coolblue').glob('*'))+sorted((ROOT/'data/acer').glob('*'))
- if subprocess.run(['git','diff','--quiet','--','coolblue-prices.json','data/smartphonehoesjes','data/coolblue','data/acer'],cwd=ROOT).returncode==0 and not subprocess.check_output(['git','ls-files','--others','--exclude-standard','data'],cwd=ROOT).strip():print('Catalog data unchanged');return
+ files=[ROOT/'coolblue-prices.json',ROOT/'data/product-matches.json']+sorted((ROOT/'data/smartphonehoesjes').glob('*'))+sorted((ROOT/'data/coolblue').glob('*'))+sorted((ROOT/'data/acer').glob('*'))
+ if subprocess.run(['git','diff','--quiet','--','coolblue-prices.json','data'],cwd=ROOT).returncode==0 and not subprocess.check_output(['git','ls-files','--others','--exclude-standard','data'],cwd=ROOT).strip():print('Catalog data unchanged');return
  def blob(p):return {'path':str(p.relative_to(ROOT)),'mode':'100644','type':'blob','sha':call('/git/blobs',{'content':base64.b64encode(p.read_bytes()).decode(),'encoding':'base64'})['sha']}
  with ThreadPoolExecutor(max_workers=4) as pool:entries=list(pool.map(blob,files))
  for attempt in range(3):
@@ -23,4 +23,5 @@ def main():
 if __name__=='__main__':
  try:main()
  except Exception as e:print('Publishing failed: '+type(e).__name__+'. Credentials and response bodies are not logged.',file=sys.stderr);raise SystemExit(1)
+
 
