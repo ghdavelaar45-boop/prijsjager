@@ -26,3 +26,6 @@ jobs:
         run: |
           python3 scripts/update-security-policy.py --check
           python3 scripts/test-security.py
+          python3 scripts/test-product-matches.py
+          node scripts/test-exact-prices.cjs
+

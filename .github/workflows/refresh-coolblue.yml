@@ -32,6 +32,7 @@ jobs:
           python3 scripts/test-security.py
           python3 scripts/test-shop-catalogs.py
           python3 scripts/test-product-matches.py
+          node scripts/test-exact-prices.cjs
       - name: Refresh Smartphonehoesjes, Coolblue and Acer catalogs
         env:
           AWIN_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
