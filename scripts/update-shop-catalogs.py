@@ -10,6 +10,18 @@ SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphoneh
 COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url']
 MAX_BYTES=160_000_000
 
+def acer_type(row):
+ name=row['product_name'].lower();category=(row.get('merchant_category') or '').strip()
+ if category=='Accessories':return 'Accessoires'
+ if re.search(r'\blaptop\b|\bnotebook\b',name):return 'Laptops'
+ if category=='Desktops' or re.search(r'\bdesktop\b|all-in-one',name):return 'Desktopcomputers'
+ if category=='Monitors' or re.search(r'\bmonitor\b',name):return 'Monitoren'
+ if re.search(r'\btablet\b',name):return 'Tablets'
+ if re.search(r'\bbeamer\b|\bprojector\b|home cinema|home entertainment|soho (?:laser|lamp)',name):return 'Projectoren'
+ if re.search(r'\bwifi\b|\brouter\b',name):return 'Netwerkapparatuur'
+ if re.search(r'\bssd\b|usb-stick',name):return 'Opslag'
+ return {'Notebooks':'Laptops','Laptops':'Laptops','Tablets':'Tablets','Projectors':'Projectoren','Peripherals':'Randapparatuur'}.get(category,'Elektronica')
+
 def feed_url(base,shop):
  cb.check_url(base)
  u=urlsplit(base);parts=u.path.split('/')
@@ -47,7 +59,8 @@ def build(raw,shop,stamp=None):
   price=cb.money(r.get('search_price'));delivery=cb.money(r.get('delivery_cost'))
   if r.get('currency')!='EUR' or price is None or price<=0:price=None
   stock=r.get('in_stock')=='1'
-  items.append([r['product_name'].strip(),(r.get('brand_name') or '').strip() or ('Acer' if shop=='acer' else 'Overige merken'),((r.get('product_type') or r.get('merchant_category')) if shop in {'coolblue','acer'} else r.get('merchant_category') or '').strip() or 'Overige producten',image,pid,price,delivery,stock])
+  category=acer_type(r) if shop=='acer' else ((r.get('product_type') or r.get('merchant_category')) if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten'
+  items.append([r['product_name'].strip(),(r.get('brand_name') or '').strip() or ('Acer' if shop=='acer' else 'Overige merken'),category,image,pid,price,delivery,stock])
  if len(items)<100:raise ValueError('Incomplete feed')
  items.sort(key=lambda p:p[0].casefold());out={};parts=[]
  for start in range(0,len(items),1000):

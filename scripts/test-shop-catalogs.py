@@ -37,5 +37,9 @@ class AcerCatalogTests(unittest.TestCase):
  def test_acer_feed_is_separate_from_coolblue(self):
   base='https://productdata.awin.com/datafeed/download/apikey/example/fid/96636/columns/product_name/format/csv/compression/gzip/'
   self.assertIn('/fid/36289/',shops.feed_url(base,'acer'))
+ def test_promotions_are_not_product_types(self):
+  self.assertEqual(shops.acer_type({'product_name':'Acer Aspire 14 Laptop','merchant_category':'10% OFF PROMO'}),'Laptops')
+  self.assertEqual(shops.acer_type({'product_name':'4 jaar garantie Laptop','merchant_category':'Accessories'}),'Accessoires')
+  self.assertEqual(shops.acer_type({'product_name':'Acer Home Entertainment H5386BDi','merchant_category':'Peripherals'}),'Projectoren')
 if __name__=='__main__':unittest.main()
 
