@@ -1,4 +1,4 @@
-name: Refresh both shop catalogs and prices
+name: Refresh Coolblue, Smartphonehoesjes and Acer catalogs
 on:
   workflow_dispatch:
   push:
@@ -30,7 +30,7 @@ jobs:
           python3 scripts/update-security-policy.py --check
           python3 scripts/test-security.py
           python3 scripts/test-shop-catalogs.py
-      - name: Refresh Smartphonehoesjes and Coolblue catalogs
+      - name: Refresh Smartphonehoesjes, Coolblue and Acer catalogs
         env:
           AWIN_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
         run: python3 scripts/update-shop-catalogs.py
@@ -38,3 +38,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/publish-shop-catalogs.py
+

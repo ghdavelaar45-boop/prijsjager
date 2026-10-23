@@ -24,4 +24,18 @@ class CatalogTests(unittest.TestCase):
   self.assertIn('/fid/20671/',shops.feed_url(base,'smartphonehoesjes'));self.assertIn('/fid/96636/',shops.feed_url(base,'coolblue'))
   for bad in ['https://evil.example/a','http://productdata.awin.com/a','https://productdata.awin.com@evil.example/a']:
    with self.assertRaises(ValueError):shops.feed_url(bad,'coolblue')
+class AcerCatalogTests(unittest.TestCase):
+ def test_acer_prices_photos_and_tracking(self):
+  row={**ROW,'merchant_id':'17133','brand_name':'Acer','merchant_image_url':'https://static2-ecemea.acer.com/media/catalog/product/laptop.jpg','merchant_category':'Laptops','aw_deep_link':'https://www.awin1.com/pclick.php?p=123&a=3124230&m=17133'}
+  result=shops.build(feed(row),'acer');r=rows(result)
+  self.assertEqual(r[0][1],'Acer');self.assertEqual(r[0][3],row['merchant_image_url']);self.assertEqual(r[0][5],12.5)
+  self.assertEqual(json.loads(result['manifest.json'])['merchantId'],'17133')
+  for change in [{'aw_deep_link':row['aw_deep_link'].replace('a=3124230','a=1')},{'aw_deep_link':row['aw_deep_link'].replace('m=17133','m=85161')}]:
+   with self.assertRaises(ValueError):shops.build(feed({**row,**change}),'acer')
+  unsafe={**row,'merchant_image_url':'https://store.acer.com.evil.example/media/laptop.jpg'}
+  self.assertEqual(rows(shops.build(feed(unsafe),'acer'))[0][3],'')
+ def test_acer_feed_is_separate_from_coolblue(self):
+  base='https://productdata.awin.com/datafeed/download/apikey/example/fid/96636/columns/product_name/format/csv/compression/gzip/'
+  self.assertIn('/fid/36289/',shops.feed_url(base,'acer'))
 if __name__=='__main__':unittest.main()
+

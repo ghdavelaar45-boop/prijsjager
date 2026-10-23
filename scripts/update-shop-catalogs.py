@@ -1,4 +1,4 @@
-"""Refresh both authorized Awin catalogs. Private download URLs never enter output files or logs."""
+"""Refresh authorized Awin shop catalogs. Private download URLs never enter output files or logs."""
 import argparse,base64,csv,gzip,hashlib,importlib.util,io,json,math,os,re,sys,tempfile
 from datetime import datetime,timezone
 from pathlib import Path
@@ -6,7 +6,7 @@ from urllib.parse import urlsplit,urlunsplit,parse_qs
 from urllib.request import Request,build_opener
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('coolblue_prices',ROOT/'scripts/update-coolblue-prices.py');cb=importlib.util.module_from_spec(spec);spec.loader.exec_module(cb)
-SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphonehoesjes.nl'}},'coolblue':{'mid':'85161','fid':'96636','hosts':{'image.coolblue.nl','coolblue.bynder.com'}}}
+SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphonehoesjes.nl'}},'coolblue':{'mid':'85161','fid':'96636','hosts':{'image.coolblue.nl','coolblue.bynder.com'}},'acer':{'mid':'17133','fid':'36289','hosts':{'static2-ecemea.acer.com'}}}
 COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url']
 MAX_BYTES=160_000_000
 
@@ -47,7 +47,7 @@ def build(raw,shop,stamp=None):
   price=cb.money(r.get('search_price'));delivery=cb.money(r.get('delivery_cost'))
   if r.get('currency')!='EUR' or price is None or price<=0:price=None
   stock=r.get('in_stock')=='1'
-  items.append([r['product_name'].strip(),(r.get('brand_name') or '').strip() or 'Overige merken',(r.get('product_type') if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten',image,pid,price,delivery,stock])
+  items.append([r['product_name'].strip(),(r.get('brand_name') or '').strip() or ('Acer' if shop=='acer' else 'Overige merken'),((r.get('product_type') or r.get('merchant_category')) if shop in {'coolblue','acer'} else r.get('merchant_category') or '').strip() or 'Overige producten',image,pid,price,delivery,stock])
  if len(items)<100:raise ValueError('Incomplete feed')
  items.sort(key=lambda p:p[0].casefold());out={};parts=[]
  for start in range(0,len(items),1000):
@@ -64,7 +64,7 @@ def write(outputs,shop):
   if path.name not in outputs:path.unlink()
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--smartphonehoesjes-file');ap.add_argument('--coolblue-file');a=ap.parse_args();pending={};raws={};stamp=datetime.now(timezone.utc).isoformat()
+ ap=argparse.ArgumentParser();ap.add_argument('--smartphonehoesjes-file');ap.add_argument('--coolblue-file');ap.add_argument('--acer-file');a=ap.parse_args();pending={};raws={};stamp=datetime.now(timezone.utc).isoformat()
  try:
   for shop in SHOPS:
    local=getattr(a,shop+'_file')
@@ -75,7 +75,7 @@ def main():
     url=feed_url(base,shop)
     with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:raw=response.read(60_000_001)
    pending[shop]=build(raw,shop,stamp);raws[shop]=raw
-  # Validate both downloads before changing either published catalog.
+  # Validate all downloads before changing any published catalog.
   prices=cb.build(raws['coolblue'],(ROOT/'index.html').read_text(),datetime.fromisoformat(stamp))
   for shop,outputs in pending.items():write(outputs,shop);m=json.loads(outputs['manifest.json']);print(shop+': '+str(m['count'])+' products, '+str(m['withPrices'])+' prices, '+str(m['withImages'])+' photos')
   (ROOT/'coolblue-prices.json').write_text(json.dumps(prices,ensure_ascii=False,separators=(',',':'))+'\n')
@@ -83,3 +83,4 @@ def main():
   safe={'Unsupported configured feed format','Feed too large','Missing feed columns','Too many products','Unexpected merchant','Unexpected affiliate link','Incomplete feed','Feed secret is not configured'}
   print('Catalog refresh failed: '+(str(exc) if isinstance(exc,ValueError) and str(exc) in safe else type(exc).__name__)+'. Existing published data retained. Private URLs are not logged.',file=sys.stderr);raise SystemExit(1)
 if __name__=='__main__':main()
+
