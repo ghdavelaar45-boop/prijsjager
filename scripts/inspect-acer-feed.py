@@ -20,7 +20,7 @@ def main():
  print('Acer accessible feeds:',json.dumps([{k:v for k,v in r.items() if k not in {'url','downloadurl'}} for r in selected]))
  for r in selected:
   fid=r.get('feedid','');status=r.get('membershipstatus','').lower()
-  if not fid.isdigit() or status!='joined':continue
+  if not fid.isdigit() or status not in {'joined','active'} or fid!='36289':continue
   shops.SHOPS['acer']={'mid':'17133','fid':fid,'hosts':set()}
   with opener.open(Request(shops.feed_url(base,'acer')),timeout=90) as res:data=res.read(60_000_001)
   items=shops.read_rows(data)

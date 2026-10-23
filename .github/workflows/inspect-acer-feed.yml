@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: [.github/workflows/inspect-acer-feed.yml]
+    paths: [.github/workflows/inspect-acer-feed.yml, scripts/inspect-acer-feed.py]
 permissions:
   contents: read
 jobs:
