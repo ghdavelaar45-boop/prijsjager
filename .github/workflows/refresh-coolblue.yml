@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - scripts/update-tradetracker-catalogs.py
       - scripts/update-shop-catalogs.py
       - scripts/match-shop-products.py
       - scripts/publish-shop-catalogs.py
@@ -30,6 +31,7 @@ jobs:
         run: |
           python3 scripts/update-security-policy.py --check
           python3 scripts/test-security.py
+          python3 scripts/test-tradetracker-catalogs.py
           python3 scripts/test-shop-catalogs.py
           python3 scripts/test-product-matches.py
           node scripts/test-exact-prices.cjs
@@ -37,9 +39,12 @@ jobs:
         env:
           AWIN_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
         run: python3 scripts/update-shop-catalogs.py
+      - name: Refresh Hobo and Yorcom catalogs
+        run: python3 scripts/update-tradetracker-catalogs.py
       - name: Publish validated catalogs atomically
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/publish-shop-catalogs.py
+
 
 
