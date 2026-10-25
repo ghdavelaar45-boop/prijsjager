@@ -12,7 +12,7 @@ from urllib.parse import urlsplit
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parent.parent
-BASE = 'https://www.prijsjager-nl.nl'
+BASE = 'https://www.mijnkoophelder.nl'
 ENDPOINT = 'https://www.bing.com/indexnow'
 
 
