@@ -16,6 +16,7 @@ class Scripts(HTMLParser):
         self.inline = []
         self.current = None
         self.external = []
+        self.integrity = {}
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         if any(k.lower().startswith('on') for k in attrs):
@@ -23,6 +24,7 @@ class Scripts(HTMLParser):
         if tag == 'script':
             if attrs.get('src'):
                 self.external.append(attrs['src'])
+                self.integrity[attrs['src']] = attrs.get('integrity')
             else:
                 self.current = []
     def handle_data(self, data):
@@ -37,9 +39,15 @@ def policy(source):
     parsed = Scripts()
     parsed.feed(source)
     beacon = 'https://static.cloudflareinsights.com/beacon.min.js'
-    if parsed.external != [beacon]:
+    local_scripts = ['/assets/awin-clickref.js', '/assets/kh-bezoekers.js']
+    if parsed.external != local_scripts:
         raise ValueError('Review new external scripts before allowing them')
     hashes = ["'sha256-" + base64.b64encode(hashlib.sha256(s.encode()).digest()).decode() + "'" for s in parsed.inline]
+    for src in local_scripts:
+        digest = 'sha256-' + base64.b64encode(hashlib.sha256((Path(__file__).resolve().parents[1] / src.lstrip('/')).read_bytes()).digest()).decode()
+        if parsed.integrity[src] != digest:
+            raise ValueError('Local script integrity does not match: ' + src)
+        hashes.append("'" + digest + "'")
     return '; '.join([
         "default-src 'none'",
         "base-uri 'none'",

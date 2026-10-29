@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - scripts/update-tradetracker-catalogs.py
+      - scripts/update-security-policy.py
+      - scripts/test-security.py
+      - assets/awin-clickref.js
+      - assets/kh-bezoekers.js
       - scripts/update-shop-catalogs.py
       - scripts/match-shop-products.py
       - scripts/publish-shop-catalogs.py

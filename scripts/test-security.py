@@ -64,5 +64,11 @@ class SecurityTests(unittest.TestCase):
     def test_inline_handlers_and_new_external_scripts_rejected(self):
         for source in ['<img onerror="alert(1)">','<script src="https://evil.example/a.js"></script>']:
             with self.subTest(source=source), self.assertRaises(ValueError):security.policy(source)
+    def test_local_script_integrity_is_required(self):
+        source=(ROOT.parent/'index.html').read_text()
+        for changed in [source.replace('integrity="sha256-', 'integrity="sha256-invalid', 1),
+                        source.replace('/assets/awin-clickref.js', '/assets/unreviewed.js', 1)]:
+            with self.subTest(source=changed[:80]), self.assertRaises(ValueError):
+                security.policy(changed)
 
 if __name__=='__main__': unittest.main()
