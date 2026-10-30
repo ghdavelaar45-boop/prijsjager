@@ -7,12 +7,16 @@ on:
       - '**.html'
       - 'scripts/**'
       - 'assets/pastcheck-*'
+      - 'assets/catalog-shops.js'
+      - 'assets/accessoires-catalog.js'
       - '.github/workflows/**'
   pull_request:
     paths:
       - '**.html'
       - 'scripts/**'
       - 'assets/pastcheck-*'
+      - 'assets/catalog-shops.js'
+      - 'assets/accessoires-catalog.js'
       - '.github/workflows/**'
 permissions:
   contents: read
@@ -31,4 +35,5 @@ jobs:
           python3 scripts/test-product-matches.py
           node scripts/test-exact-prices.cjs
           node scripts/test-pastcheck.cjs
+          node scripts/test-catalog-shops.cjs
 
