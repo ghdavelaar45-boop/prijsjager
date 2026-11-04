@@ -1,6 +1,20 @@
 'use strict';
 (()=>{
 const $=id=>document.getElementById(id),C=KHPast,euro=n=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format(n);
+const params=new URLSearchParams(location.search);
+const sharedModel=params.get('model');
+const campaignRefs=new Map([
+ ['instagram:reel_model','kh_hoesjes_ig_model'],
+ ['instagram:reel_bestel','kh_hoesjes_ig_bestel'],
+ ['facebook:reel_model','kh_hoesjes_fb_model'],
+ ['facebook:reel_bestel','kh_hoesjes_fb_bestel'],
+ ['instagram:bio','kh_hoesjes_ig_bio'],
+ ['whatsapp:deelknop','kh_hoesjes_wa'],
+ ['gedeeld:deelknop','kh_hoesjes_gedeeld']
+]);
+const phoneClickRef=params.get('utm_campaign')==='pastcheck_hoesjes'
+ ? campaignRefs.get(params.get('utm_source')+':'+params.get('utm_content'))
+ : undefined;
 let phones=[],phoneManifest,phoneFiltered=[],shown=12,printerManifest,printers=[],printerRows=[];
 function el(tag,value,cls){const e=document.createElement(tag);if(value!==undefined)e.textContent=value;if(cls)e.className=cls;return e;}
 function sourceLink(url,label){const a=el('a',label);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
@@ -21,7 +35,7 @@ function product(row,shop,m){
  card.append(el('p',fresh?(row[6]===null?'Bezorgkosten: zie winkel':row[6]===0?'Geen bezorgkosten volgens winkelgegevens':euro(row[6])+' bezorgkosten'):'Gegevens ouder dan 48 uur of datum onbekend; controleer de winkel.'));
  if(fresh)card.append(el('p',row[7]?'Volgens winkelgegevens op voorraad':'Voorraad: controleer de winkel'));
  card.append(el('p','Advertentielink · commissie mogelijk.'));
- const a=el('a','Bekijk bij '+(shop==='coolblue'?'Coolblue':'Smartphonehoesjes.nl')+' ↗','button');a.href='https://www.awin1.com/pclick.php?p='+row[4]+'&a=3124230&m='+(shop==='coolblue'?'85161':'8261')+'&clickref=kh_pastcheck_exact';a.target='_blank';a.rel='sponsored noopener noreferrer';card.append(a);return card;
+ const a=el('a','Bekijk bij '+(shop==='coolblue'?'Coolblue':'Smartphonehoesjes.nl')+' ↗','button');a.href='https://www.awin1.com/pclick.php?p='+row[4]+'&a=3124230&m='+(shop==='coolblue'?'85161':'8261')+'&clickref='+(shop==='phone'&&phoneClickRef?phoneClickRef:'kh_pastcheck_exact');a.target='_blank';a.rel='sponsored noopener noreferrer';card.append(a);return card;
 }
 function modelOptions(){
  const query=C.norm($('phoneSearch').value),selected=$('phoneModel').value;
@@ -32,12 +46,27 @@ function modelOptions(){
 }
 function renderPhones(){
  const model=$('phoneModel').value;phoneFiltered=phones.filter(p=>p.models.includes(model));$('phoneResults').replaceChildren(...phoneFiltered.slice(0,shown).map(p=>product(p.row,'phone',phoneManifest)));
- $('phoneReason').hidden=!model;$('phoneMore').hidden=!model||shown>=phoneFiltered.length;
+ $('phoneReason').hidden=!model;
+ const share=$('phoneShare');
+ $('phoneShareControls').hidden=!model;
+ if(model){
+  const link=new URL('/pastcheck-exact.html',location.origin);
+  link.search=new URLSearchParams({model,utm_source:'whatsapp',utm_medium:'share',utm_campaign:'pastcheck_hoesjes',utm_content:'deelknop'});
+  link.hash='telefoon';
+  share.href='https://wa.me/?text='+encodeURIComponent('Bekijk hoesjes voor '+model+' op KoopHelder: '+link.href);
+  link.searchParams.set('utm_source','gedeeld');
+  $('phoneShareLink').value=link.href;
+ }$('phoneMore').hidden=!model||shown>=phoneFiltered.length;
  if(model){$('phoneReason').replaceChildren(el('strong','Volgens de winkeltitel voor: '+model),el('p',phoneFiltered.length+' hoesjes met deze volledige herkende modelnaam. '+Math.min(shown,phoneFiltered.length)+' getoond. Controleer de compatibiliteitslijst bij de winkel vóór je bestelt.'),el('p','Waarom deze selectie? De variant in de producttitel komt overeen met jouw keuze. De alfabetische volgorde is geen beoordeling of prijsranglijst.'));
  }
 }
 $('phoneSearch').addEventListener('input',()=>{shown=12;if(phoneManifest)modelOptions();});$('phoneModel').addEventListener('change',()=>{shown=12;renderPhones();});$('phoneMore').addEventListener('click',()=>{shown+=12;renderPhones();});
-async function loadPhones(){try{const c=await catalog('smartphonehoesjes','8261',$('phoneStatus'));phoneManifest=c.manifest;phones=c.rows.filter(r=>r[2]==='Phone Cover').map(row=>({row,models:C.models(row[0])})).filter(p=>p.models.length);$('phoneModel').disabled=false;modelOptions();}catch(e){$('phoneStatus').textContent=e.message+' Probeer de pagina opnieuw te laden.';$('phoneModel').replaceChildren(new Option('Modelcheck nu niet beschikbaar',''));}}
+async function loadPhones(){try{const c=await catalog('smartphonehoesjes','8261',$('phoneStatus'));phoneManifest=c.manifest;phones=c.rows.filter(r=>r[2]==='Phone Cover').map(row=>({row,models:C.models(row[0])})).filter(p=>p.models.length);$('phoneModel').disabled=false;modelOptions();
+ if(sharedModel && [...$('phoneModel').options].some(option=>option.value===sharedModel)){
+  $('phoneModel').value=sharedModel;
+  renderPhones();
+ }
+}catch(e){$('phoneStatus').textContent=e.message+' Probeer de pagina opnieuw te laden.';$('phoneModel').replaceChildren(new Option('Modelcheck nu niet beschikbaar',''));}}
 const form=$('costForm'),field=name=>form.elements.namedItem(name);
 function setField(name,value){field(name).value=value===undefined||value===null?'':value;}
 function selectPrinter(){
