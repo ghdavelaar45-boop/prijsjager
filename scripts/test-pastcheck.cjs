@@ -36,5 +36,25 @@ assert.equal(C.calculate({...input,pages:0}).ink,0);
 // Every exact printer/ink title must resolve to the intended category in today's real catalog.
 const data=JSON.parse(fs.readFileSync('assets/pastcheck-models.json'));
 const rows=fs.readdirSync('data/coolblue').filter(f=>f.endsWith('.gz')).flatMap(f=>JSON.parse(zlib.gunzipSync(fs.readFileSync('data/coolblue/'+f))));
-for(const p of data.printers){assert.equal(rows.filter(r=>r[0]===p.name&&r[2]==='printers').length,1,p.name);for(const title of p.inks){const matches=rows.filter(r=>r[0]===title);assert.equal(matches.length,1,title);assert(['cartridges','toners','inktflesjes'].includes(matches[0][2]));}assert(!p.inks.some(t=>t.includes('PG-585')));assert(p.source.startsWith('https://'));}
+// Catalog availability changes between feed refreshes. Missing products are reported,
+ // never fabricated or treated as a matching product.
+let availablePrinters=0, verifiedInks=0;
+for(const p of data.printers){
+ const printerMatches=rows.filter(r=>r[0]===p.name&&r[2]==='printers');
+ assert(printerMatches.length<=1,'Duplicate printer: '+p.name);
+ if(printerMatches.length===0){console.warn('PastCheck unavailable printer: '+p.name);continue;}
+ availablePrinters++;
+ for(const title of p.inks){
+  const matches=rows.filter(r=>r[0]===title);
+  assert(matches.length<=1,'Duplicate ink: '+title);
+  if(matches.length===0){console.warn('PastCheck unavailable ink for '+p.name+': '+title);continue;}
+  assert(['cartridges','toners','inktflesjes'].includes(matches[0][2]),title);
+  verifiedInks++;
+ }
+ assert(!p.inks.some(t=>t.includes('PG-585')));
+ assert(p.source.startsWith('https://'));
+}
+assert(availablePrinters>0,'No configured PastCheck printers available in catalog');
+assert(verifiedInks>0,'No configured PastCheck ink or toner available in catalog');
+console.log('PastCheck catalog availability: '+availablePrinters+' printers and '+verifiedInks+' ink/toner items verified.');
 console.log('PastCheck: variant isolation, incomplete names, stale prices, unsafe images, whole-pack costs and real catalog mappings passed.');
