@@ -297,14 +297,15 @@ body.sectionPageOpen>.hero,body.sectionPageOpen>#homeContent,body.detailPageOpen
 </style>
 
 <style>
-/* KoopHelder startpagina: subtiel doorschijnend noorderlicht (alleen achtergrond) */
-body:not(.sectionPageOpen):not(.detailPageOpen) {
-  background-color: #f8fbff;
+/* KoopHelder startpagina: subtiel noorderlicht in het zichtbare blauwe welkomstvlak.
+   Het logo, tekst, knoppen, afbeeldingen, overige pagina's en functies blijven onaangeroerd. */
+body:not(.sectionPageOpen):not(.detailPageOpen) > .hero {
+  background-color: #0c4c93;
   background-image:
-    radial-gradient(ellipse 39% 360px at 2% 540px, rgba(77, 203, 207, 0.15), rgba(77, 203, 207, 0.04) 53%, transparent 79%),
-    radial-gradient(ellipse 38% 420px at 98% 700px, rgba(142, 154, 230, 0.12), rgba(142, 154, 230, 0.035) 52%, transparent 78%),
-    radial-gradient(ellipse 35% 275px at 48% 1190px, rgba(117, 216, 196, 0.09), transparent 78%),
-    linear-gradient(180deg, #f9fbff 0%, #f7fafd 1500px, #f4f7fc 2300px);
+    radial-gradient(ellipse 72% 39% at 0% 32%, rgba(65, 229, 208, .23), rgba(47, 166, 212, .09) 52%, transparent 82%),
+    radial-gradient(ellipse 53% 35% at 100% 65%, rgba(168, 177, 246, .17), rgba(65, 215, 207, .09) 52%, transparent 85%),
+    linear-gradient(153deg, transparent 34%, rgba(99, 224, 213, .08) 44%, rgba(146, 162, 235, .07) 51%, transparent 63%),
+    linear-gradient(125deg, #083a78, #075bb2 68%, #103e84);
   background-repeat: no-repeat;
 }
 </style>
