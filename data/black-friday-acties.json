@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "updatedAt": "2026-11-06",
+  "timezone": "Europe/Amsterdam",
+  "offers": [
+    {
+      "shop": "Acer",
+      "title": "Black Friday: tot 50% korting op geselecteerde producten",
+      "detail": "De korting wordt volgens Acer automatisch verrekend in de winkelwagen. Het percentage geldt niet voor alle artikelen.",
+      "from": "2026-11-03T09:00:00+01:00",
+      "until": "2026-11-26T12:00:00+01:00",
+      "href": "/acer.html",
+      "code": "",
+      "source": "Awin-bericht Acer NL van 2 november 2026"
+    },
+    {
+      "shop": "Acer",
+      "title": "Singles’ Day: tot 50% korting en 3% extra",
+      "detail": "Extra kortingscode voor de toepasselijke artikelen. Controleer uitsluitingen en de afrekening bij Acer.",
+      "from": "2026-11-10T12:00:00+01:00",
+      "until": "2026-11-12T12:00:00+01:00",
+      "href": "/acer.html",
+      "code": "BF3",
+      "source": "Awin-bericht Acer NL van 2 november 2026"
+    },
+    {
+      "shop": "Acer",
+      "title": "10% op artikelen buiten de sale",
+      "detail": "Alleen op artikelen die voor de kortingscode in aanmerking komen; controleer de eindprijs bij Acer.",
+      "from": "2026-11-13T15:00:00+01:00",
+      "until": "2026-11-17T09:00:00+01:00",
+      "href": "/acer.html",
+      "code": "SAVE10",
+      "source": "Awin-bericht Acer NL van 2 november 2026"
+    },
+    {
+      "shop": "Acer",
+      "title": "10% op SSD's en grafische kaarten",
+      "detail": "Alleen voor de toepasselijke artikelen en volgens de voorwaarden van Acer.",
+      "from": "2026-11-17T09:00:00+01:00",
+      "until": "2026-11-20T09:00:00+01:00",
+      "href": "/acer.html",
+      "code": "GPU10",
+      "source": "Awin-bericht Acer NL van 2 november 2026"
+    },
+    {
+      "shop": "Smartphonehoesjes.nl",
+      "title": "Black Friday: tot 50% korting en 20% extra met code",
+      "detail": "De 20%-code geldt volgens de winkelactievoorwaarden. Niet alle producten krijgen 50% korting; kortingen zijn niet zonder meer stapelbaar.",
+      "from": "2026-11-12T00:00:00+01:00",
+      "until": "2026-12-01T00:00:00+01:00",
+      "href": "/accessoires.html",
+      "code": "BLACKFRIDAY",
+      "source": "Awin-bericht Smartphonehoesjes.nl van 5 november 2026"
+    }
+  ]
+}
