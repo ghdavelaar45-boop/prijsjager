@@ -341,37 +341,28 @@ body:not(.sectionPageOpen):not(.detailPageOpen) > .hero {
   border-bottom: 1.5px solid #ffae35;
 }
 
-/* Startpagina-fotokaarten: compactere afbeeldingen en beter leesbare tekst. */
-body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPickVisual {
-  height: 146px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPickVisual img {
-  max-width: 69%;
-  max-height: 69%;
-  margin: auto;
-}
-body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick strong {
-  font-size: 19px;
-  line-height: 1.35;
-}
-body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick > span {
-  font-size: 13.5px;
-  line-height: 1.55;
-}
-@media(max-width:700px) {
-  body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPickVisual {
-    height: 110px;
-    padding: 7px;
+
+/* Accessoiregroepen op mobiel: kleinere sfeervierkanten in plaats van volle kaartbreedte. */
+@media(max-width:600px) {
+  body:not(.detailPageOpen) #accessoryGroups .accessoryGroupCard > .accessoryPhoto {
+    display:block;
+    width:min(62%, 280px);
+    height:auto;
+    max-height:none;
+    aspect-ratio:1/1;
+    margin:14px auto 8px;
+    border-radius:14px;
+    background-size:500% 200%;
   }
-  body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick strong {
-    font-size: 16px;
+  body:not(.detailPageOpen) #accessoryGroups .accessoryGroupCopy h3 {
+    font-size:20px;
   }
-  body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick > span {
-    font-size: 12.5px;
+  body:not(.detailPageOpen) #accessoryGroups .accessoryGroupCopy p {
+    font-size:15px;
+    line-height:1.65;
+  }
+  body:not(.detailPageOpen) #accessoryGroups .accessoryPhotoCaption {
+    font-size:11px;
   }
 }
 </style>
