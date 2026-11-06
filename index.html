@@ -317,6 +317,29 @@ body:not(.sectionPageOpen):not(.detailPageOpen) > .top {
     linear-gradient(115deg, #06366e, #084b9d 60%, #06346b);
   background-repeat: no-repeat;
 }
+
+/* Startpagina: gekozen zachtblauw #78AADB en dunne koplijn */
+/* Alleen het gebied ONDER het bestaande blauwe welkomstvlak; kop en logo blijven intact. */
+body:not(.sectionPageOpen):not(.detailPageOpen) {
+  background-color: #78aadb;
+}
+/* De overloop van de startpagina blijft doorschijnend over de gekozen kleur. */
+body:not(.sectionPageOpen):not(.detailPageOpen) > #homeContent {
+  background: transparent;
+}
+/* Contrast van de tekst direct onder het blauwe vlak bewaken. */
+body:not(.sectionPageOpen):not(.detailPageOpen) > #homeContent .qualityStrip,
+body:not(.sectionPageOpen):not(.detailPageOpen) > #homeContent .qualityStrip a,
+body:not(.sectionPageOpen):not(.detailPageOpen) > #homeContent .qualityStrip span::before {
+  color: #10233e;
+}
+body:not(.sectionPageOpen):not(.detailPageOpen) > #homeContent .qualityStrip a {
+  text-decoration: underline;
+}
+/* Dunne volle breedte lijn direct onder de logobalk. */
+body:not(.sectionPageOpen):not(.detailPageOpen) > .top {
+  border-bottom: 3px solid #ffae35;
+}
 </style>
 </head><body><a class="skipLink" href="#main-content">Ga naar de inhoud</a>
 <header class="top" id="top"><div class="wrap nav"><a aria-label="KoopHelder – terug naar boven" class="brand" href="#top"><img class="fullBrandLogo" src="/assets/koophelder-logo-horizontal-light.webp" alt="KoopHelder – Vergelijk, vind, bespaar" width="2172" height="724" decoding="async" fetchpriority="high"/></a><button aria-controls="sectionOverlay" aria-expanded="false" aria-label="Menu openen" class="mobileMenuButton" id="menuToggle" type="button">☰  Menu</button><nav aria-label="Hoofdnavigatie" class="navlinks" id="hoofdmenu"><a href="/?pagina=keuzehulp">Keuzehulp</a><a href="/?pagina=pastcheck">PastCheck</a><a href="/?pagina=accessoires">Accessoires</a><a href="/?pagina=producten">Producten</a><a href="/?pagina=koopgids">Koopgids</a><a href="/?pagina=werkwijze">Zo kiezen we</a><a href="#favorieten">Mijn bewaarde producten</a></nav></div></header>
