@@ -22,7 +22,7 @@ const back=el('a','Gewoon assortiment bekijken');back.href=links[shop];back.clas
 status.textContent=active.length+' actuele '+(active.length===1?'actie':'acties')+' · '+upcoming.length+' aangekondigd. Verlopen acties worden automatisch verborgen.';
 }
 try{const res=await fetch('/data/black-friday-acties.json',{cache:'no-store'});if(!res.ok)throw Error('Het actiebestand is niet bereikbaar.');const data=await res.json();render(data);
-const next=data.offers.map(o=>[Date.parse(o.from),Date.parse(o.until)]).flat().filter(t=>t>Date.now()).sort((a,b)=>a-b)[0];
-if(next){const wait=Math.min(next-Date.now()+1000,2147483647);setTimeout(()=>render(data),wait)}
+// Check periodically: a deal never remains labelled active after its end.
+setInterval(()=>render(data),60000);
 }catch(e){status.textContent='Acties zijn tijdelijk niet beschikbaar. Raadpleeg de winkels voor de actuele voorwaarden.';list.replaceChildren()}
 })();
