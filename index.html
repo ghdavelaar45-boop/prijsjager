@@ -340,6 +340,37 @@ body:not(.sectionPageOpen):not(.detailPageOpen) > #homeContent .qualityStrip a {
 body:not(.sectionPageOpen):not(.detailPageOpen) > .hero {
   border-bottom: 1.5px solid #ffae35;
 }
+
+/* Startpagina-fotokaarten: compactere afbeeldingen en beter leesbare tekst. */
+body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPickVisual {
+  height: 146px;
+  padding: 12px;
+}
+body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPickVisual img {
+  max-width: 86%;
+  max-height: 86%;
+  margin: auto;
+}
+body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick strong {
+  font-size: 19px;
+  line-height: 1.35;
+}
+body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick > span {
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+@media(max-width:700px) {
+  body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPickVisual {
+    height: 110px;
+    padding: 7px;
+  }
+  body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick strong {
+    font-size: 16px;
+  }
+  body:not(.sectionPageOpen):not(.detailPageOpen) #photoPicks .photoPick > span {
+    font-size: 12.5px;
+  }
+}
 </style>
 </head><body><a class="skipLink" href="#main-content">Ga naar de inhoud</a>
 <header class="top" id="top"><div class="wrap nav"><a aria-label="KoopHelder – terug naar boven" class="brand" href="#top"><img class="fullBrandLogo" src="/assets/koophelder-logo-horizontal-light.webp" alt="KoopHelder – Vergelijk, vind, bespaar" width="2172" height="724" decoding="async" fetchpriority="high"/></a><button aria-controls="sectionOverlay" aria-expanded="false" aria-label="Menu openen" class="mobileMenuButton" id="menuToggle" type="button">☰  Menu</button><nav aria-label="Hoofdnavigatie" class="navlinks" id="hoofdmenu"><a href="/?pagina=keuzehulp">Keuzehulp</a><a href="/?pagina=pastcheck">PastCheck</a><a href="/?pagina=accessoires">Accessoires</a><a href="/?pagina=producten">Producten</a><a href="/?pagina=koopgids">Koopgids</a><a href="/?pagina=werkwijze">Zo kiezen we</a><a href="#favorieten">Mijn bewaarde producten</a></nav></div></header>
