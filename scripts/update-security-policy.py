@@ -39,7 +39,7 @@ def policy(source):
     parsed = Scripts()
     parsed.feed(source)
     beacon = 'https://static.cloudflareinsights.com/beacon.min.js'
-    local_scripts = ['/assets/awin-clickref.js', '/assets/kh-bezoekers.js']
+    local_scripts = ['/assets/acties.js', '/assets/awin-clickref.js', '/assets/kh-bezoekers.js']
     if parsed.external != local_scripts:
         raise ValueError('Review new external scripts before allowing them')
     hashes = ["'sha256-" + base64.b64encode(hashlib.sha256(s.encode()).digest()).decode() + "'" for s in parsed.inline]
