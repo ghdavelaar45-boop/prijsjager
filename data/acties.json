@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "promotions": [
+    {
+      "id": "acer-black-friday-2026",
+      "shop": "acer",
+      "source": "awin",
+      "approved": true,
+      "title": "Acer Black Friday: tot 50% korting",
+      "detail": "Op geselecteerde Acer-producten. De korting wordt volgens Acer pas in het winkelwagentje verrekend.",
+      "startAt": "2026-11-03T09:00:00+01:00",
+      "endAt": "2026-11-26T12:00:00+01:00"
+    },
+    {
+      "id": "smartphonehoesjes-black-friday-2026",
+      "shop": "smartphonehoesjes",
+      "source": "awin",
+      "approved": true,
+      "title": "Smartphonehoesjes.nl: Black Friday tot 50% korting",
+      "detail": "Op geselecteerde artikelen tot 50% korting, plus 20% korting met code BLACKFRIDAY op artikelen waarop de actievoorwaarden van toepassing zijn.",
+      "code": "BLACKFRIDAY",
+      "startAt": "2026-11-12T00:00:00+01:00",
+      "endAt": "2026-12-01T00:00:00+01:00"
+    }
+  ]
+}
