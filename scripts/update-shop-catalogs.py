@@ -7,6 +7,9 @@ from urllib.request import Request,build_opener
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('coolblue_prices',ROOT/'scripts/update-coolblue-prices.py');cb=importlib.util.module_from_spec(spec);spec.loader.exec_module(cb)
 SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphonehoesjes.nl'}},'coolblue':{'mid':'85161','fid':'96636','hosts':{'image.coolblue.nl','coolblue.bynder.com'}},'acer':{'mid':'17133','fid':'36289','hosts':{'static2-ecemea.acer.com'}}}
+SHOPS['dutchplaza']={'mid':'127667','fid':'116143','hosts':{'cdn.webshopapp.com'}}
+# Pilot: iPhone 16 128 GB green and pink, and iPhone 17 256 GB black.
+DUTCH_PLAZA_PILOT={'154524698','154144477','159822522'}
 COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url','ean','product_GTIN','upc','mpn']
 MAX_BYTES=160_000_000
 
@@ -50,18 +53,19 @@ def build(raw,shop,stamp=None):
   if r['merchant_id']!=cfg['mid']:raise ValueError('Unexpected merchant')
   u=urlsplit(r['aw_deep_link']);q=parse_qs(u.query)
   if u.scheme!='https' or u.netloc!='www.awin1.com' or u.path!='/pclick.php' or q.get('a')!=['3124230'] or q.get('m')!=[cfg['mid']] or not re.fullmatch(r'\d+',q.get('p',[''])[0]):raise ValueError('Unexpected affiliate link')
+  if shop=='dutchplaza' and (r.get('merchant_product_id') not in DUTCH_PLAZA_PILOT or not (r.get('merchant_category') or '').startswith('Smartphones > ')):continue
   pid=q['p'][0]
   if pid in seen:continue
   seen.add(pid);image=''
   for key in ['merchant_image_url','large_image','alternate_image','merchant_thumb_url']:
    candidate=(r.get(key) or '').strip();v=urlsplit(candidate)
-   if v.scheme=='https' and v.hostname in cfg['hosts'] and not v.username and not v.password and v.port in (None,443):image=candidate;break
+   if v.scheme=='https' and v.hostname in cfg['hosts'] and not v.username and not v.password and v.port in (None,443) and (shop!='dutchplaza' or v.path.startswith('/shops/328120/files/')):image=candidate;break
   price=cb.money(r.get('search_price'));delivery=cb.money(r.get('delivery_cost'))
   if r.get('currency')!='EUR' or price is None or price<=0:price=None
   stock=r.get('in_stock')=='1'
-  category=acer_type(r) if shop=='acer' else ((r.get('product_type') or r.get('merchant_category')) if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten'
+  category='Smartphones' if shop=='dutchplaza' else acer_type(r) if shop=='acer' else ((r.get('product_type') or r.get('merchant_category')) if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten'
   items.append([r['product_name'].strip(),(r.get('brand_name') or '').strip() or ('Acer' if shop=='acer' else 'Overige merken'),category,image,pid,price,delivery,stock])
- if len(items)<100:raise ValueError('Incomplete feed')
+ if len(items)<(1 if shop=='dutchplaza' else 100):raise ValueError('Incomplete feed')
  items.sort(key=lambda p:p[0].casefold());out={};parts=[]
  for start in range(0,len(items),1000):
   payload=gzip.compress(json.dumps(items[start:start+1000],ensure_ascii=False,separators=(',',':')).encode(),mtime=0);name='catalog-'+str(start//1000).zfill(2)+'.json.gz';out[name]=payload;parts.append({'file':name,'count':len(items[start:start+1000]),'sha256':hashlib.sha256(payload).hexdigest()})
@@ -77,17 +81,22 @@ def write(outputs,shop):
   if path.name not in outputs:path.unlink()
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--smartphonehoesjes-file');ap.add_argument('--coolblue-file');ap.add_argument('--acer-file');a=ap.parse_args();pending={};raws={};stamp=datetime.now(timezone.utc).isoformat()
+ ap=argparse.ArgumentParser();ap.add_argument('--smartphonehoesjes-file');ap.add_argument('--coolblue-file');ap.add_argument('--acer-file');ap.add_argument('--dutchplaza-file');a=ap.parse_args();pending={};raws={};stamp=datetime.now(timezone.utc).isoformat()
  try:
   for shop in SHOPS:
-   local=getattr(a,shop+'_file')
-   if local:raw=Path(local).read_bytes()
-   else:
-    base=(os.environ.get('AWIN_FEED_URL') or os.environ.get('AWIN_COOLBLUE_FEED_URL') or '').strip()
-    if not base:raise ValueError('Feed secret is not configured')
-    url=feed_url(base,shop)
-    with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:raw=response.read(60_000_001)
-   pending[shop]=build(raw,shop,stamp);raws[shop]=raw
+   try:
+    local=getattr(a,shop+'_file')
+    if local:raw=Path(local).read_bytes()
+    else:
+     base=(os.environ.get('AWIN_FEED_URL') or os.environ.get('AWIN_COOLBLUE_FEED_URL') or '').strip()
+     if not base:raise ValueError('Feed secret is not configured')
+     url=feed_url(base,shop)
+     with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:raw=response.read(60_000_001)
+    pending[shop]=build(raw,shop,stamp)
+    if shop!='dutchplaza':raws[shop]=raw
+   except Exception:
+    if shop!='dutchplaza':raise
+    print('Dutch Plaza feed unavailable; retained the previous pilot catalog.',file=sys.stderr)
   # Validate all downloads before changing any published catalog.
   prices=cb.build(raws['coolblue'],(ROOT/'index.html').read_text(),datetime.fromisoformat(stamp))
   matcher_spec=importlib.util.spec_from_file_location('matcher',ROOT/'scripts/match-shop-products.py');matcher=importlib.util.module_from_spec(matcher_spec);matcher_spec.loader.exec_module(matcher)

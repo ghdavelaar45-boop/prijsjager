@@ -55,7 +55,7 @@ def policy(source):
         "script-src " + ' '.join(hashes + [beacon]),
         "script-src-attr 'none'",
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: https://image.coolblue.nl https://coolblue.bynder.com https://www.smartphonehoesjes.nl https://static2-ecemea.acer.com https://www.hobo.nl https://www.yorcom.nl",
+        "img-src 'self' data: https://image.coolblue.nl https://coolblue.bynder.com https://www.smartphonehoesjes.nl https://static2-ecemea.acer.com https://www.hobo.nl https://www.yorcom.nl https://cdn.webshopapp.com/shops/328120/files/",
         "connect-src 'self' https://cloudflareinsights.com",
         "form-action 'none'",
         "upgrade-insecure-requests",
