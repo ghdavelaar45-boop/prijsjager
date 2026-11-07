@@ -8,8 +8,6 @@ ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('coolblue_prices',ROOT/'scripts/update-coolblue-prices.py');cb=importlib.util.module_from_spec(spec);spec.loader.exec_module(cb)
 SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphonehoesjes.nl'}},'coolblue':{'mid':'85161','fid':'96636','hosts':{'image.coolblue.nl','coolblue.bynder.com'}},'acer':{'mid':'17133','fid':'36289','hosts':{'static2-ecemea.acer.com'}}}
 SHOPS['dutchplaza']={'mid':'127667','fid':'116143','hosts':{'cdn.webshopapp.com'}}
-# Pilot: iPhone 16 128 GB green and pink, and iPhone 17 256 GB black.
-DUTCH_PLAZA_PILOT={'154524698','154144477','159822522'}
 COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url','ean','product_GTIN','upc','mpn']
 MAX_BYTES=160_000_000
 
@@ -24,6 +22,15 @@ def acer_type(row):
  if re.search(r'\bwifi\b|\brouter\b',name):return 'Netwerkapparatuur'
  if re.search(r'\bssd\b|usb-stick',name):return 'Opslag'
  return {'Notebooks':'Laptops','Laptops':'Laptops','Tablets':'Tablets','Projectors':'Projectoren','Peripherals':'Randapparatuur'}.get(category,'Elektronica')
+
+def dutch_plaza_type(row):
+ category=(row.get('merchant_category') or '').split(' > ',1)[0].strip()
+ name=row['product_name']
+ if category=='Computers & Laptops' and re.search(r'\b(?:laptop|macbook|galaxy book|notebook)',name,re.I):return 'Laptops'
+ if category=='Beeld & Geluid':
+  if re.search(r'\b(?:AirPods|Galaxy Buds)',name,re.I):return 'Oordopjes'
+  if re.search(r'\b(?:monitor|ThinkVision|Dell Pro P P\d)',name,re.I):return 'Monitoren'
+ return category or 'Overige producten'
 
 def feed_url(base,shop):
  cb.check_url(base)
@@ -53,7 +60,6 @@ def build(raw,shop,stamp=None):
   if r['merchant_id']!=cfg['mid']:raise ValueError('Unexpected merchant')
   u=urlsplit(r['aw_deep_link']);q=parse_qs(u.query)
   if u.scheme!='https' or u.netloc!='www.awin1.com' or u.path!='/pclick.php' or q.get('a')!=['3124230'] or q.get('m')!=[cfg['mid']] or not re.fullmatch(r'\d+',q.get('p',[''])[0]):raise ValueError('Unexpected affiliate link')
-  if shop=='dutchplaza' and (r.get('merchant_product_id') not in DUTCH_PLAZA_PILOT or not (r.get('merchant_category') or '').startswith('Smartphones > ')):continue
   pid=q['p'][0]
   if pid in seen:continue
   seen.add(pid);image=''
@@ -63,7 +69,7 @@ def build(raw,shop,stamp=None):
   price=cb.money(r.get('search_price'));delivery=cb.money(r.get('delivery_cost'))
   if r.get('currency')!='EUR' or price is None or price<=0:price=None
   stock=r.get('in_stock')=='1'
-  category='Smartphones' if shop=='dutchplaza' else acer_type(r) if shop=='acer' else ((r.get('product_type') or r.get('merchant_category')) if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten'
+  category=dutch_plaza_type(r) if shop=='dutchplaza' else acer_type(r) if shop=='acer' else ((r.get('product_type') or r.get('merchant_category')) if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten'
   items.append([r['product_name'].strip(),(r.get('brand_name') or '').strip() or ('Acer' if shop=='acer' else 'Overige merken'),category,image,pid,price,delivery,stock])
  if len(items)<(1 if shop=='dutchplaza' else 100):raise ValueError('Incomplete feed')
  items.sort(key=lambda p:p[0].casefold());out={};parts=[]
@@ -96,7 +102,7 @@ def main():
     if shop!='dutchplaza':raws[shop]=raw
    except Exception:
     if shop!='dutchplaza':raise
-    print('Dutch Plaza feed unavailable; retained the previous pilot catalog.',file=sys.stderr)
+    print('Dutch Plaza feed unavailable; retained the previous catalog.',file=sys.stderr)
   # Validate all downloads before changing any published catalog.
   prices=cb.build(raws['coolblue'],(ROOT/'index.html').read_text(),datetime.fromisoformat(stamp))
   matcher_spec=importlib.util.spec_from_file_location('matcher',ROOT/'scripts/match-shop-products.py');matcher=importlib.util.module_from_spec(matcher_spec);matcher_spec.loader.exec_module(matcher)
