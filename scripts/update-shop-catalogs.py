@@ -4,6 +4,7 @@ from datetime import datetime,timezone
 from pathlib import Path
 from urllib.parse import urlsplit,urlunsplit,parse_qs
 from urllib.request import Request,build_opener
+from urllib.error import HTTPError
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('coolblue_prices',ROOT/'scripts/update-coolblue-prices.py');cb=importlib.util.module_from_spec(spec);spec.loader.exec_module(cb)
 SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphonehoesjes.nl'}},'coolblue':{'mid':'85161','fid':'96636','hosts':{'image.coolblue.nl','coolblue.bynder.com'}},'acer':{'mid':'17133','fid':'36289','hosts':{'static2-ecemea.acer.com'}}}
@@ -102,7 +103,11 @@ def main():
      with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:raw=response.read(60_000_001)
     pending[shop]=build(raw,shop,stamp)
     raws[shop]=raw
-   except Exception:
+   except Exception as exc:
+    if isinstance(exc,HTTPError):
+     print('Awin feed download failed for '+shop+': HTTP '+str(exc.code)+'. No private URL or token logged.',file=sys.stderr)
+    elif shop!='dutchplaza':
+     print('Catalog processing failed for '+shop+': '+type(exc).__name__+'. No private URL or token logged.',file=sys.stderr)
     if shop!='dutchplaza':raise
     print('Dutch Plaza feed unavailable; retained the previous catalog.',file=sys.stderr)
   # Validate all downloads before changing any published catalog.
