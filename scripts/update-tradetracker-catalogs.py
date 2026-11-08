@@ -1,5 +1,5 @@
 """Import the approved Dutch TradeTracker feeds; publish only validated product data."""
-import argparse,gzip,hashlib,json,math,re,sys
+import argparse,gzip,hashlib,json,math,os,re,sys
 from datetime import datetime,timezone
 from pathlib import Path
 from urllib.parse import urlsplit,parse_qs
@@ -19,12 +19,28 @@ def valid_link(url,shop):
  if u.scheme!='https' or u.netloc!=host or u.path!=path or q.get('tt')!=[campaign+'_'+fid+'_518245_']:return False
  target=urlsplit(q.get('r',[''])[0])
  return target.scheme=='https' and target.netloc==host and not target.username and not target.password
+def catalog_id(shop,product_id):
+ return str(1000000000000000+int(hashlib.sha256((shop+':'+str(product_id)).encode()).hexdigest()[:12],16))
+
+def match_rows(data,shop):
+ # These exact Yorcom listings were checked on the merchant's product pages.
+ new_yorcom={'TABAPPP25310':'00195950398168','LAPAPMBP4516':'00195950489484'}
+ for p in data['products']:
+  ean=prop(p,'EAN')
+  if not ean:continue
+  condition=prop(p,'condition')
+  if not condition and shop=='yorcom' and new_yorcom.get(p['ID'])==ean.zfill(14):
+   condition='new'
+  if condition.lower() not in {'new','nieuw','neu'}:continue
+  yield {'condition':condition,'product_name':p['name'],'brand_name':prop(p,'brand'),'ean':ean,
+         'catalog_id':catalog_id(shop,p['ID']),'url':p['URL']}
+
 def build(data,shop,stamp=None):
  campaign,fid,host,path=SHOPS[shop];products=data.get('products');items=[];seen=set()
  if not isinstance(products,list) or not 100<=len(products)<=100000:raise ValueError('Incomplete feed')
  for p in products:
   if str(p.get('campaignID'))!=campaign or not valid_link(p.get('URL',''),shop):raise ValueError('Unexpected product identity or tracking link')
-  pid=str(1000000000000000+int(hashlib.sha256((shop+':'+str(p['ID'])).encode()).hexdigest()[:12],16))
+  pid=catalog_id(shop,p['ID'])
   if pid in seen:raise ValueError('Duplicate product identity')
   seen.add(pid);image=''
   for candidate in p.get('images',[]):
@@ -45,18 +61,20 @@ def build(data,shop,stamp=None):
  out['manifest.json']=json.dumps({'schema':2,'network':'tradetracker','merchantId':campaign,'publisherId':'518245','fetchedAt':stamp,'maxAgeHours':48,'count':len(items),'withPrices':sum(p[5] is not None for p in items),'withImages':sum(bool(p[3]) for p in items),'files':files},separators=(',',':')).encode()
  return out
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--hobo-file');ap.add_argument('--yorcom-file');a=ap.parse_args();pending={};stamp=datetime.now(timezone.utc).isoformat()
+ ap=argparse.ArgumentParser();ap.add_argument('--hobo-file');ap.add_argument('--yorcom-file');ap.add_argument('--match-file');a=ap.parse_args();pending={};matches={};stamp=os.environ.get('KOOPHELDER_CATALOG_STAMP') or datetime.now(timezone.utc).isoformat()
  for shop,(_,fid,_,_) in SHOPS.items():
   local=getattr(a,shop+'_file')
   if local:raw=Path(local).read_bytes()
   else:
    with urlopen('https://pf.tradetracker.net/?aid=518245&encoding=utf-8&type=json&fid='+fid+'&categoryType=2&additionalType=2',timeout=90) as r:raw=r.read(50000001)
   if len(raw)>50000000:raise ValueError('Feed too large')
-  pending[shop]=build(json.loads(raw),shop,stamp)
+  data=json.loads(raw);pending[shop]=build(data,shop,stamp)
+  if a.match_file:matches[shop]=list(match_rows(data,shop))
  for shop,outputs in pending.items():
   target=ROOT/'data'/shop;target.mkdir(parents=True,exist_ok=True)
   for name,raw in outputs.items():(target/name).write_bytes(raw)
   for p in target.glob('catalog-*.json.gz'):
    if p.name not in outputs:p.unlink()
   m=json.loads(outputs['manifest.json']);print(shop+': '+str(m['count'])+' products, '+str(m['withPrices'])+' prices, '+str(m['withImages'])+' photos')
+ if a.match_file:Path(a.match_file).write_text(json.dumps(matches))
 if __name__=='__main__':main()

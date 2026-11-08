@@ -87,7 +87,7 @@ def write(outputs,shop):
   if path.name not in outputs:path.unlink()
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--smartphonehoesjes-file');ap.add_argument('--coolblue-file');ap.add_argument('--acer-file');ap.add_argument('--dutchplaza-file');a=ap.parse_args();pending={};raws={};stamp=datetime.now(timezone.utc).isoformat()
+ ap=argparse.ArgumentParser();ap.add_argument('--smartphonehoesjes-file');ap.add_argument('--coolblue-file');ap.add_argument('--acer-file');ap.add_argument('--dutchplaza-file');ap.add_argument('--tradetracker-match-file');a=ap.parse_args();pending={};raws={};stamp=os.environ.get('KOOPHELDER_CATALOG_STAMP') or datetime.now(timezone.utc).isoformat()
  try:
   for shop in SHOPS:
    try:
@@ -99,14 +99,27 @@ def main():
      url=feed_url(base,shop)
      with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:raw=response.read(60_000_001)
     pending[shop]=build(raw,shop,stamp)
-    if shop!='dutchplaza':raws[shop]=raw
+    raws[shop]=raw
    except Exception:
     if shop!='dutchplaza':raise
     print('Dutch Plaza feed unavailable; retained the previous catalog.',file=sys.stderr)
   # Validate all downloads before changing any published catalog.
   prices=cb.build(raws['coolblue'],(ROOT/'index.html').read_text(),datetime.fromisoformat(stamp))
   matcher_spec=importlib.util.spec_from_file_location('matcher',ROOT/'scripts/match-shop-products.py');matcher=importlib.util.module_from_spec(matcher_spec);matcher_spec.loader.exec_module(matcher)
-  matches=matcher.build({shop:read_rows(raw) for shop,raw in raws.items()},SHOPS,stamp)
+  feeds={shop:read_rows(raw) for shop,raw in raws.items()}
+  matches=matcher.build({shop:rows for shop,rows in feeds.items() if shop!='dutchplaza'},SHOPS,stamp)
+  trade_link=None
+  if a.tradetracker_match_file:
+   tt_spec=importlib.util.spec_from_file_location('trade_catalogs',ROOT/'scripts/update-tradetracker-catalogs.py');trade=importlib.util.module_from_spec(tt_spec);tt_spec.loader.exec_module(trade)
+   candidates=json.loads(Path(a.tradetracker_match_file).read_text())
+   feeds.update({shop:candidates[shop] for shop in trade.SHOPS})
+   trade_link=trade.valid_link
+  if 'dutchplaza' in feeds:
+   groups={(g['gtin'],g['brand']):g for g in matches['groups']}
+   for g in matcher.build(feeds,SHOPS,stamp,trade_link)['groups']:
+    if any(shop=='dutchplaza' for shop,_ in g['members']):
+     groups[(g['gtin'],g['brand'])]=g
+   matches['groups']=[groups[k] for k in sorted(groups)]
   for shop,outputs in pending.items():write(outputs,shop);m=json.loads(outputs['manifest.json']);print(shop+': '+str(m['count'])+' products, '+str(m['withPrices'])+' prices, '+str(m['withImages'])+' photos')
   (ROOT/'coolblue-prices.json').write_text(json.dumps(prices,ensure_ascii=False,separators=(',',':'))+'\n')
   (ROOT/'data/product-matches.json').write_text(json.dumps(matches,separators=(',',':'))+'\n')

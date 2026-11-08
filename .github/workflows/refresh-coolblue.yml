@@ -44,12 +44,13 @@ jobs:
           node scripts/test-exact-prices.cjs
           node scripts/test-catalog-shops.cjs
           node scripts/test-acties.cjs
-      - name: Refresh Smartphonehoesjes, Coolblue and Acer catalogs
+      - name: Refresh Awin and TradeTracker catalogs
         env:
           AWIN_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
-        run: python3 scripts/update-shop-catalogs.py
-      - name: Refresh Hobo and Yorcom catalogs
-        run: python3 scripts/update-tradetracker-catalogs.py
+        run: |
+          export KOOPHELDER_CATALOG_STAMP="$(date -u +%Y-%m-%dT%H:%M:%S+00:00)"
+          python3 scripts/update-tradetracker-catalogs.py --match-file "$RUNNER_TEMP/koophelder-trade-matches.json"
+          python3 scripts/update-shop-catalogs.py --tradetracker-match-file "$RUNNER_TEMP/koophelder-trade-matches.json"
       - name: Publish validated catalogs atomically
         env:
           GH_TOKEN: ${{ github.token }}

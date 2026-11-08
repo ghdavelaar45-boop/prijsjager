@@ -25,4 +25,14 @@ class Matches(unittest.TestCase):
  def test_three_shops_when_exact_item_exists(self):
   feeds={shop:[row(shop,str(i))] for i,shop in enumerate(CFG,1)}
   self.assertEqual(len(m.build(feeds,CFG,'now')['groups'][0]['members']),3)
+ def test_dutch_plaza_and_tradetracker_exact_match(self):
+  cfg={**CFG,'dutchplaza':{'mid':'127667'}}
+  dutch={**row('coolblue','5'),'condition':'','aw_deep_link':'https://www.awin1.com/pclick.php?p=5&a=3124230&m=127667'}
+  yorcom={**row('coolblue','4'),'catalog_id':'4','url':'verified-link'}
+  feeds={'dutchplaza':[dutch],'yorcom':[yorcom]}
+  verify=lambda url,source:(url,source)==('verified-link','yorcom')
+  self.assertEqual(m.build(feeds,cfg,'now',verify)['groups'][0]['members'],[['dutchplaza','5'],['yorcom','4']])
+  self.assertEqual(m.build(feeds,cfg,'now')['groups'],[])
+  for update in [{'condition':'used'},{'product_name':'Refurbished Acer Laptop'},{'ean':'5901234123457'}]:
+   self.assertEqual(m.build({**feeds,'dutchplaza':[{**dutch,**update}]},cfg,'now',verify)['groups'],[])
 if __name__=='__main__':unittest.main()
