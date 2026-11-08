@@ -87,7 +87,9 @@ def write(outputs,shop):
   if path.name not in outputs:path.unlink()
 
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--smartphonehoesjes-file');ap.add_argument('--coolblue-file');ap.add_argument('--acer-file');ap.add_argument('--dutchplaza-file');ap.add_argument('--tradetracker-match-file');a=ap.parse_args();pending={};raws={};stamp=os.environ.get('KOOPHELDER_CATALOG_STAMP') or datetime.now(timezone.utc).isoformat()
+ ap=argparse.ArgumentParser()
+ for shop in SHOPS:ap.add_argument('--'+shop+'-file',dest=shop+'_file')
+ ap.add_argument('--tradetracker-match-file');a=ap.parse_args();pending={};raws={};stamp=os.environ.get('KOOPHELDER_CATALOG_STAMP') or datetime.now(timezone.utc).isoformat()
  try:
   for shop in SHOPS:
    try:
@@ -108,18 +110,15 @@ def main():
   matcher_spec=importlib.util.spec_from_file_location('matcher',ROOT/'scripts/match-shop-products.py');matcher=importlib.util.module_from_spec(matcher_spec);matcher_spec.loader.exec_module(matcher)
   feeds={shop:read_rows(raw) for shop,raw in raws.items()}
   matches=matcher.build({shop:rows for shop,rows in feeds.items() if shop!='dutchplaza'},SHOPS,stamp)
-  trade_link=None
+  groups={(g['gtin'],g['brand']):g for g in matches['groups']}
+  if 'dutchplaza' in feeds:
+   groups.update(((g['gtin'],g['brand']),g) for g in matcher.build(feeds,SHOPS,stamp)['groups'])
   if a.tradetracker_match_file:
    tt_spec=importlib.util.spec_from_file_location('trade_catalogs',ROOT/'scripts/update-tradetracker-catalogs.py');trade=importlib.util.module_from_spec(tt_spec);tt_spec.loader.exec_module(trade)
    candidates=json.loads(Path(a.tradetracker_match_file).read_text())
    feeds.update({shop:candidates[shop] for shop in trade.SHOPS})
-   trade_link=trade.valid_link
-  if 'dutchplaza' in feeds:
-   groups={(g['gtin'],g['brand']):g for g in matches['groups']}
-   for g in matcher.build(feeds,SHOPS,stamp,trade_link)['groups']:
-    if any(shop=='dutchplaza' for shop,_ in g['members']):
-     groups[(g['gtin'],g['brand'])]=g
-   matches['groups']=[groups[k] for k in sorted(groups)]
+   groups.update(((g['gtin'],g['brand']),g) for g in matcher.build(feeds,SHOPS,stamp,trade.valid_link)['groups'])
+  matches['groups']=[groups[k] for k in sorted(groups)]
   for shop,outputs in pending.items():write(outputs,shop);m=json.loads(outputs['manifest.json']);print(shop+': '+str(m['count'])+' products, '+str(m['withPrices'])+' prices, '+str(m['withImages'])+' photos')
   (ROOT/'coolblue-prices.json').write_text(json.dumps(prices,ensure_ascii=False,separators=(',',':'))+'\n')
   (ROOT/'data/product-matches.json').write_text(json.dumps(matches,separators=(',',':'))+'\n')

@@ -6,6 +6,9 @@ from urllib.parse import urlsplit,parse_qs
 from urllib.request import urlopen
 ROOT=Path(__file__).resolve().parents[1]
 SHOPS={'hobo':('37535','2232033','www.hobo.nl','/tradetracker-redirect/'),'yorcom':('4837','253916','www.yorcom.nl','/shopping/')}
+SPECIAL_STOCK=re.compile(
+ r'\b(?:refurb(?:ished)?|tweedehands|tweedekans|gebruikt|used|renewed|outlet|buitenkans|'
+ r'demo(?:[ -]?model)?|show(?:room)?[ -]?model|open[ -]?box|retour[ -]?deal|b[ -]?stock|occasion|verhuur)\b',re.I)
 def money(v):
  try:
   n=float(v)
@@ -23,17 +26,23 @@ def catalog_id(shop,product_id):
  return str(1000000000000000+int(hashlib.sha256((shop+':'+str(product_id)).encode()).hexdigest()[:12],16))
 
 def match_rows(data,shop):
- # These exact Yorcom listings were checked on the merchant's product pages.
- new_yorcom={'TABAPPP25310':'00195950398168','LAPAPMBP4516':'00195950489484'}
  for p in data['products']:
   ean=prop(p,'EAN')
-  if not ean:continue
-  condition=prop(p,'condition')
-  if not condition and shop=='yorcom' and new_yorcom.get(p['ID'])==ean.zfill(14):
-   condition='new'
-  if condition.lower() not in {'new','nieuw','neu'}:continue
-  yield {'condition':condition,'product_name':p['name'],'brand_name':prop(p,'brand'),'ean':ean,
-         'catalog_id':catalog_id(shop,p['ID']),'url':p['URL']}
+  brand=prop(p,'brand')
+  if not ean or not brand:continue
+  url=p['URL']
+  target=urlsplit(parse_qs(urlsplit(url).query).get('r',[''])[0])
+  category=prop(p,'categoryPath')
+  subcategory=prop(p,'subcategories')
+  # These feeds omit condition for their regular assortment. Special stock is
+  # labelled in the listing or shop category and must stay out of comparisons.
+  labels=(p['name'],category,subcategory,prop(p,'extraInfo'),target.path)
+  if any(SPECIAL_STOCK.search(label) for label in labels):continue
+  condition=prop(p,'condition').lower()
+  if condition and condition not in {'new','nieuw','neu'}:continue
+  if not condition and not (category or subcategory):continue
+  yield {'condition':'new','product_name':p['name'],'brand_name':brand,'ean':ean,
+         'catalog_id':catalog_id(shop,p['ID']),'url':url}
 
 def build(data,shop,stamp=None):
  campaign,fid,host,path=SHOPS[shop];products=data.get('products');items=[];seen=set()
@@ -61,7 +70,9 @@ def build(data,shop,stamp=None):
  out['manifest.json']=json.dumps({'schema':2,'network':'tradetracker','merchantId':campaign,'publisherId':'518245','fetchedAt':stamp,'maxAgeHours':48,'count':len(items),'withPrices':sum(p[5] is not None for p in items),'withImages':sum(bool(p[3]) for p in items),'files':files},separators=(',',':')).encode()
  return out
 def main():
- ap=argparse.ArgumentParser();ap.add_argument('--hobo-file');ap.add_argument('--yorcom-file');ap.add_argument('--match-file');a=ap.parse_args();pending={};matches={};stamp=os.environ.get('KOOPHELDER_CATALOG_STAMP') or datetime.now(timezone.utc).isoformat()
+ ap=argparse.ArgumentParser()
+ for shop in SHOPS:ap.add_argument('--'+shop+'-file',dest=shop+'_file')
+ ap.add_argument('--match-file');a=ap.parse_args();pending={};matches={};stamp=os.environ.get('KOOPHELDER_CATALOG_STAMP') or datetime.now(timezone.utc).isoformat()
  for shop,(_,fid,_,_) in SHOPS.items():
   local=getattr(a,shop+'_file')
   if local:raw=Path(local).read_bytes()

@@ -24,4 +24,18 @@ class FeedTests(unittest.TestCase):
   with self.assertRaises(ValueError):tt.build({'products':[]},'hobo')
   data=feed('hobo');data['products'][1]['ID']=data['products'][0]['ID']
   with self.assertRaises(ValueError):tt.build(data,'hobo')
+ def test_comparisons_include_regular_assortment_and_exclude_special_stock(self):
+  for shop in tt.SHOPS:
+   data=feed(shop)
+   regular,outlet,demo,used,uncategorized=[data['products'][i] for i in range(5)]
+   for p in (regular,outlet,demo,used,uncategorized):
+    p['properties']['EAN']=['4006381333931']
+   regular['name']='Test stekkerdoos met 6 outlets'
+   outlet['properties']['categoryPath']=['Computers > Outlet']
+   demo['name']='Test demomodel'
+   used['properties']['condition']=['used']
+   uncategorized['properties'].pop('categoryPath')
+   with self.subTest(shop=shop):
+    rows=list(tt.match_rows(data,shop))
+    self.assertEqual([row['catalog_id'] for row in rows],[tt.catalog_id(shop,regular['ID'])])
 if __name__=='__main__':unittest.main()
