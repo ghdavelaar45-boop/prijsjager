@@ -13,6 +13,14 @@ def gtin(value):
 def brand(value):
  return re.sub(r'[^a-z0-9]','',unicodedata.normalize('NFKD',str(value)).encode('ascii','ignore').decode().lower())
 
+def package_size(name):
+ quantity=re.search(r'\b(?:set van\s+(\d+)|(\d+)\s*(?:stuks|[- ]pack))\b',name,re.I)
+ if quantity:return int(quantity.group(1) or quantity.group(2))
+ if re.search(r'\bper paar\b',name,re.I):return 2
+ if re.search(r'\bper stuk\b',name,re.I):return 1
+ if re.search(r'\bper set\b',name,re.I):return 'set'
+ return None
+
 def build(feeds,configs,stamp,trade_link=None):
  groups=defaultdict(dict)
  for source,rows in feeds.items():
@@ -38,7 +46,7 @@ def build(feeds,configs,stamp,trade_link=None):
     if not trade_link or not trade_link(row.get('url',''),source):continue
     pid=row.get('catalog_id','')
    if not pid.isdigit():continue
-   key=(next(iter(values)),maker);groups[key][(source,pid)]={'source':source,'id':pid,'mpn':str(row.get('mpn') or '').strip().upper()}
+   key=(next(iter(values)),maker);groups[key][(source,pid)]={'source':source,'id':pid,'mpn':str(row.get('mpn') or '').strip().upper(),'package_size':package_size(name)}
  out=[]
  for (code,maker),members in sorted(groups.items()):
   items=list(members.values());sources={x['source'] for x in items}
@@ -46,5 +54,7 @@ def build(feeds,configs,stamp,trade_link=None):
   if len(sources)<2 or len(sources)!=len(items):continue
   mpns={x['mpn'] for x in items if x['mpn']}
   if len(mpns)>1:continue
+  # A shop may reuse a single item's barcode when selling a pair or set.
+  if len({x['package_size'] for x in items})>1 or items[0]['package_size']=='set':continue
   out.append({'gtin':code,'brand':maker,'condition':'new','members':[[x['source'],x['id']] for x in sorted(items,key=lambda x:x['source'])]})
  return {'schema':1,'publisherId':'3124230','fetchedAt':stamp,'method':'validated-gtin-brand-new','groups':out}

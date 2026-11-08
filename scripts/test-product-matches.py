@@ -18,6 +18,12 @@ class Matches(unittest.TestCase):
  def test_conflicting_mpn_and_gtin_fields(self):
   self.assertEqual(match(a={'mpn':'NX.ABC.001'},b={'mpn':'NX.ABC.002'}),[])
   self.assertEqual(match(b={'product_GTIN':'5901234123457'}),[])
+ def test_package_quantity_must_agree_even_if_barcode_matches(self):
+  pair={'product_name':'Speaker (per paar)'}
+  self.assertEqual(match(a=pair),[])
+  self.assertEqual(match(a=pair,b={'product_name':'Speaker (per stuk)'}),[])
+  self.assertEqual(match(a=pair,b={'product_name':'Speaker set van 3'}),[])
+  self.assertEqual(len(match(a=pair,b={'product_name':'Speaker (2 stuks)'})),1)
  def test_ambiguous_same_shop_and_wrong_affiliate_identity(self):
   feeds={'coolblue':[row('coolblue','1'),row('coolblue','3')],'acer':[row('acer','2')]}
   self.assertEqual(m.build(feeds,CFG,'now')['groups'],[])
