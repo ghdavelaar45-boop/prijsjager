@@ -19,4 +19,9 @@ for(const page of ['index.html','acer.html','accessoires.html','coolblue.html','
  assert(html.includes('/assets/acties.js"'),page+' missing promo policy');
 }
 assert(!data.promotions.some(p=>p.shop==='coolblue'),'Coolblue dates await confirmation');
+const blackFridayPage=fs.readFileSync('assets/black-friday-acties.js','utf8');
+assert(blackFridayPage.includes("fetch('/data/acties.json'"),'Black Friday page should use the same approved action feed');
+assert(!blackFridayPage.includes("fetch('/data/black-friday-acties.json'"),'Legacy action feed must not power live pages');
+for(const shop of ['dutchplaza','mobielnl'])assert(blackFridayPage.includes(shop+':{name:'),'Black Friday page must list '+shop);
+for(const code of ['BF3','SAVE10','GPU10'])assert(data.promotions.some(p=>p.code===code),'Expected already-announced Acer promotion '+code);
 console.log('Black Friday tests passed: all five shops, source checks, exact start and expiry, safe fallback.');

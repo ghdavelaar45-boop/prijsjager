@@ -12,6 +12,17 @@
       "endAt": "2026-11-26T12:00:00+01:00"
     },
     {
+      "id": "acer-singles-day-2026",
+      "shop": "acer",
+      "source": "awin",
+      "approved": true,
+      "title": "Acer Singles’ Day: tot 50% korting en 3% extra",
+      "detail": "Alleen op deelnemende artikelen. Controleer uitgesloten modellen en de uiteindelijke prijs in de winkelwagen.",
+      "code": "BF3",
+      "startAt": "2026-11-10T12:00:00+01:00",
+      "endAt": "2026-11-12T12:00:00+01:00"
+    },
+    {
       "id": "smartphonehoesjes-black-friday-2026",
       "shop": "smartphonehoesjes",
       "source": "awin",
@@ -21,6 +32,28 @@
       "code": "BLACKFRIDAY",
       "startAt": "2026-11-12T00:00:00+01:00",
       "endAt": "2026-12-01T00:00:00+01:00"
+    },
+    {
+      "id": "acer-buiten-sale-2026",
+      "shop": "acer",
+      "source": "awin",
+      "approved": true,
+      "title": "Acer: 10% op artikelen buiten de sale",
+      "detail": "Alleen op artikelen die volgens Acer voor de kortingscode in aanmerking komen.",
+      "code": "SAVE10",
+      "startAt": "2026-11-13T15:00:00+01:00",
+      "endAt": "2026-11-17T09:00:00+01:00"
+    },
+    {
+      "id": "acer-ssd-gpu-2026",
+      "shop": "acer",
+      "source": "awin",
+      "approved": true,
+      "title": "Acer: 10% op geselecteerde SSD’s en grafische kaarten",
+      "detail": "De korting geldt alleen voor artikelen waarvoor Acer de code toestaat.",
+      "code": "GPU10",
+      "startAt": "2026-11-17T09:00:00+01:00",
+      "endAt": "2026-11-20T09:00:00+01:00"
     }
   ]
 }
