@@ -12,6 +12,9 @@ SHOPS['dutchplaza']={'mid':'127667','fid':'116143','hosts':{'cdn.webshopapp.com'
 SHOPS['mobielnl']={'mid':'8373','hosts':{'www.mobiel.nl','mobiel-product.imgix.net','product.mobiel.nl'},'optional':True}
 COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url','ean','product_GTIN','upc','mpn']
 MAX_BYTES=160_000_000
+MOBIEL_COLUMNS=['merchant_id','merchant_deep_link','aw_deep_link','product_name','brand_name',
+               'merchant_image_url','search_price','currency','delivery_cost','in_stock',
+               'condition','ean','product_GTIN','upc','mpn']
 
 def acer_type(row):
  name=row['product_name'].lower();category=(row.get('merchant_category') or '').strip()
@@ -34,11 +37,11 @@ def dutch_plaza_type(row):
   if re.search(r'\b(?:monitor|ThinkVision|Dell Pro P P\d)',name,re.I):return 'Monitoren'
  return category or 'Overige producten'
 
-def feed_url(base,shop,fid=None):
+def feed_url(base,shop,fid=None,columns=COLUMNS):
  cb.check_url(base)
  u=urlsplit(base);parts=u.path.split('/')
  if u.hostname!='productdata.awin.com' or not u.path.startswith('/datafeed/download/') or 'apikey' not in parts or 'fid' not in parts or 'columns' not in parts:raise ValueError('Unsupported configured feed format')
- for k,v in [('fid',fid or SHOPS[shop]['fid']),('language','nl'),('columns',','.join(COLUMNS)),('format','csv'),('compression','gzip')]:
+ for k,v in [('fid',fid or SHOPS[shop]['fid']),('language','nl'),('columns',','.join(columns)),('format','csv'),('compression','gzip')]:
   if k in parts:parts[parts.index(k)+1]=v
   else:parts.extend([k,v])
  return urlunsplit((u.scheme,u.netloc,'/'.join(parts),'',''))
@@ -62,7 +65,9 @@ def mobiel_feed_ids(raw):
  return ids
 
 def mobiel_phone(row):
- u=urlsplit(row.get('merchant_deep_link') or '')
+ destination=row.get('merchant_deep_link') or ''
+ if '/los-toestel' not in destination:return False
+ u=urlsplit(destination)
  if u.scheme!='https' or u.netloc not in {'www.mobiel.nl','mobiel.nl'}:return False
  if not re.fullmatch(r'/smartphone/[^/]+/[^/]+(?:/[^/]+)*/los-toestel/?',u.path):return False
  name=row.get('product_name') or ''
@@ -80,12 +85,26 @@ def mobiel_rows(base):
  parts=urlsplit(base).path.split('/')
  if 'apikey' not in parts or parts.index('apikey')+1>=len(parts):raise ValueError('Unsupported configured feed format')
  key=quote(unquote(parts[parts.index('apikey')+1]),safe='')
- listing=download('https://ui.awin.com/productdata-darwin-download/publisher/3124230/'+key+'/1/feedList',5_000_000)
+ listing=download('https://ui.awin.com/productdata-darwin-download/publisher/3124230/'+key+'/1/feedList',20_000_000)
  rows=[]
  for fid in mobiel_feed_ids(listing):
-  feed=read_rows(download(feed_url(base,'mobielnl',fid),60_000_000))
-  rows.extend(r for r in feed if mobiel_phone(r))
+  url=feed_url(base,'mobielnl',fid,MOBIEL_COLUMNS)
+  with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:
+   if int(response.headers.get('Content-Length') or 0)>650_000_000:raise ValueError('Feed too large')
+   with io.BufferedReader(response) as payload:
+    stream=gzip.GzipFile(fileobj=payload) if payload.peek(2).startswith(b'\x1f\x8b') else payload
+    with io.TextIOWrapper(stream,encoding='utf-8-sig',newline='') as text:
+     append_mobiel_phones(text,rows)
+ print('Mobiel.nl: '+str(len(rows))+' standalone rows selected from Awin')
  return rows
+
+def append_mobiel_phones(text,rows):
+ reader=csv.DictReader(text)
+ if not {'merchant_id','merchant_deep_link','product_name','aw_deep_link','search_price','currency'}.issubset(reader.fieldnames or []):
+  raise ValueError('Missing feed columns')
+ for i,row in enumerate(reader):
+  if i>=8_000_000 or len(rows)>=50_000:raise ValueError('Too many products')
+  if mobiel_phone(row):rows.append(row)
 
 def read_rows(raw):
  if len(raw)>60_000_000:raise ValueError('Feed too large')
