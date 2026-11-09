@@ -2,7 +2,7 @@
 import argparse,base64,csv,gzip,hashlib,importlib.util,io,json,math,os,re,sys,tempfile
 from datetime import datetime,timezone
 from pathlib import Path
-from urllib.parse import urlsplit,urlunsplit,parse_qs,quote
+from urllib.parse import urlsplit,urlunsplit,parse_qs,quote,unquote
 from urllib.request import Request,build_opener
 from urllib.error import HTTPError
 ROOT=Path(__file__).resolve().parents[1]
@@ -44,12 +44,19 @@ def feed_url(base,shop,fid=None):
  return urlunsplit((u.scheme,u.netloc,'/'.join(parts),'',''))
 
 def mobiel_feed_ids(raw):
+ data=raw.decode('utf-8-sig')
+ try: dialect=csv.Sniffer().sniff(data.splitlines()[0],delimiters=',;\t')
+ except (csv.Error,IndexError):raise ValueError('Unrecognized Awin feed list')
+ listing=csv.DictReader(io.StringIO(data),dialect=dialect)
  ids=[]
- for row in csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))):
-  if row.get('Advertiser ID')!=SHOPS['mobielnl']['mid']:continue
-  if (row.get('Membership Status') or '').strip().lower()!='active':continue
-  if (row.get('Datafeed Format') or '').strip().lower()!='awin':continue
-  fid=(row.get('Feed ID') or '').strip()
+ for entry in listing:
+  row={re.sub(r'[^a-z0-9]','',key.lower()):str(value or '').strip()
+       for key,value in entry.items() if key is not None}
+  if (row.get('advertiserid') or row.get('merchantid'))!=SHOPS['mobielnl']['mid']:continue
+  if row.get('membershipstatus','').lower() not in {'active','joined'}:continue
+  fmt=(row.get('datafeedformat') or '').lower()
+  if fmt and fmt not in {'awin','legacy'}:continue
+  fid=row.get('feedid') or row.get('datafeedid') or ''
   if re.fullmatch(r'[0-9]+',fid) and fid not in ids:ids.append(fid)
  if not ids:raise ValueError('No active Mobiel.nl Awin feed found')
  return ids
@@ -72,7 +79,7 @@ def mobiel_rows(base):
  cb.check_url(base)
  parts=urlsplit(base).path.split('/')
  if 'apikey' not in parts or parts.index('apikey')+1>=len(parts):raise ValueError('Unsupported configured feed format')
- key=quote(parts[parts.index('apikey')+1],safe='')
+ key=quote(unquote(parts[parts.index('apikey')+1]),safe='')
  listing=download('https://ui.awin.com/productdata-darwin-download/publisher/3124230/'+key+'/1/feedList',5_000_000)
  rows=[]
  for fid in mobiel_feed_ids(listing):
@@ -142,10 +149,14 @@ def main():
     pending[shop]=build(raw,shop,stamp)
     raws[shop]=raw
    except Exception as exc:
+    safe_reasons={'Unsupported configured feed format','Feed too large','Missing feed columns',
+                  'Too many products','Unexpected merchant','Unexpected affiliate link','Incomplete feed',
+                  'Feed secret is not configured','Unrecognized Awin feed list','No active Mobiel.nl Awin feed found'}
     if isinstance(exc,HTTPError):
      print('Awin feed download failed for '+shop+': HTTP '+str(exc.code)+'. No private URL or token logged.',file=sys.stderr)
     else:
-     print('Catalog processing failed for '+shop+': '+type(exc).__name__+'. No private URL or token logged.',file=sys.stderr)
+     reason=str(exc) if isinstance(exc,ValueError) and str(exc) in safe_reasons else type(exc).__name__
+     print('Catalog processing failed for '+shop+': '+reason+'. No private URL or token logged.',file=sys.stderr)
     if not SHOPS[shop].get('optional'):raise
     print(shop+' feed unavailable; retained the previous catalog.',file=sys.stderr)
   # Validate all downloads before changing any published catalog.
