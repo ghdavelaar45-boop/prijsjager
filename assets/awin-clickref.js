@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   // Privacyvriendelijke indeling van bestaande Awin-klikken; geen extra trackingverzoeken.
-  const merchants = { '85161': 'coolblue', '8261': 'hoesjes', '17133': 'acer' };
+  const merchants = { '85161': 'coolblue', '8261': 'hoesjes', '17133': 'acer', '8373': 'mobielnl' };
   const ownHosts = ['mijnkoophelder.nl','www.mijnkoophelder.nl','prijsjager-nl.nl','www.prijsjager-nl.nl'];
   if (!ownHosts.includes(location.hostname)) return;
   document.addEventListener('click', event => {

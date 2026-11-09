@@ -2,13 +2,14 @@
 import argparse,base64,csv,gzip,hashlib,importlib.util,io,json,math,os,re,sys,tempfile
 from datetime import datetime,timezone
 from pathlib import Path
-from urllib.parse import urlsplit,urlunsplit,parse_qs
+from urllib.parse import urlsplit,urlunsplit,parse_qs,quote
 from urllib.request import Request,build_opener
 from urllib.error import HTTPError
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('coolblue_prices',ROOT/'scripts/update-coolblue-prices.py');cb=importlib.util.module_from_spec(spec);spec.loader.exec_module(cb)
 SHOPS={'smartphonehoesjes':{'mid':'8261','fid':'20671','hosts':{'www.smartphonehoesjes.nl'}},'coolblue':{'mid':'85161','fid':'96636','hosts':{'image.coolblue.nl','coolblue.bynder.com'}},'acer':{'mid':'17133','fid':'36289','hosts':{'static2-ecemea.acer.com'}}}
-SHOPS['dutchplaza']={'mid':'127667','fid':'116143','hosts':{'cdn.webshopapp.com'}}
+SHOPS['dutchplaza']={'mid':'127667','fid':'116143','hosts':{'cdn.webshopapp.com'},'optional':True}
+SHOPS['mobielnl']={'mid':'8373','hosts':{'www.mobiel.nl','mobiel-product.imgix.net','product.mobiel.nl'},'optional':True}
 COLUMNS=['aw_deep_link','product_name','aw_product_id','merchant_product_id','merchant_image_url','merchant_category','search_price','currency','delivery_cost','merchant_deep_link','merchant_id','brand_name','in_stock','condition','stock_status','product_type','large_image','alternate_image','merchant_thumb_url','ean','product_GTIN','upc','mpn']
 MAX_BYTES=160_000_000
 
@@ -33,14 +34,51 @@ def dutch_plaza_type(row):
   if re.search(r'\b(?:monitor|ThinkVision|Dell Pro P P\d)',name,re.I):return 'Monitoren'
  return category or 'Overige producten'
 
-def feed_url(base,shop):
+def feed_url(base,shop,fid=None):
  cb.check_url(base)
  u=urlsplit(base);parts=u.path.split('/')
  if u.hostname!='productdata.awin.com' or not u.path.startswith('/datafeed/download/') or 'apikey' not in parts or 'fid' not in parts or 'columns' not in parts:raise ValueError('Unsupported configured feed format')
- for k,v in [('fid',SHOPS[shop]['fid']),('language','nl'),('columns',','.join(COLUMNS)),('format','csv'),('compression','gzip')]:
+ for k,v in [('fid',fid or SHOPS[shop]['fid']),('language','nl'),('columns',','.join(COLUMNS)),('format','csv'),('compression','gzip')]:
   if k in parts:parts[parts.index(k)+1]=v
   else:parts.extend([k,v])
  return urlunsplit((u.scheme,u.netloc,'/'.join(parts),'',''))
+
+def mobiel_feed_ids(raw):
+ ids=[]
+ for row in csv.DictReader(io.StringIO(raw.decode('utf-8-sig'))):
+  if row.get('Advertiser ID')!=SHOPS['mobielnl']['mid']:continue
+  if (row.get('Membership Status') or '').strip().lower()!='active':continue
+  if (row.get('Datafeed Format') or '').strip().lower()!='awin':continue
+  fid=(row.get('Feed ID') or '').strip()
+  if re.fullmatch(r'[0-9]+',fid) and fid not in ids:ids.append(fid)
+ if not ids:raise ValueError('No active Mobiel.nl Awin feed found')
+ return ids
+
+def mobiel_phone(row):
+ u=urlsplit(row.get('merchant_deep_link') or '')
+ if u.scheme!='https' or u.netloc not in {'www.mobiel.nl','mobiel.nl'}:return False
+ if not re.fullmatch(r'/smartphone/[^/]+/[^/]+(?:/[^/]+)*/los-toestel/?',u.path):return False
+ name=row.get('product_name') or ''
+ if re.search(r'\b(?:abonnement|sim[ -]?only|refurbished|tweedehands|renewed|bundle|bundel)\b|\s\+\s',name,re.I):return False
+ return True
+
+def download(url,limit):
+ with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:
+  data=response.read(limit+1)
+ if len(data)>limit:raise ValueError('Feed too large')
+ return data
+
+def mobiel_rows(base):
+ cb.check_url(base)
+ parts=urlsplit(base).path.split('/')
+ if 'apikey' not in parts or parts.index('apikey')+1>=len(parts):raise ValueError('Unsupported configured feed format')
+ key=quote(parts[parts.index('apikey')+1],safe='')
+ listing=download('https://ui.awin.com/productdata-darwin-download/publisher/3124230/'+key+'/1/feedList',5_000_000)
+ rows=[]
+ for fid in mobiel_feed_ids(listing):
+  feed=read_rows(download(feed_url(base,'mobielnl',fid),60_000_000))
+  rows.extend(r for r in feed if mobiel_phone(r))
+ return rows
 
 def read_rows(raw):
  if len(raw)>60_000_000:raise ValueError('Feed too large')
@@ -56,9 +94,10 @@ def read_rows(raw):
  return rows
 
 def build(raw,shop,stamp=None):
- cfg=SHOPS[shop];rows=read_rows(raw);items=[];seen=set()
+ cfg=SHOPS[shop];rows=read_rows(raw) if isinstance(raw,bytes) else raw;items=[];seen=set()
  for r in rows:
   if r['merchant_id']!=cfg['mid']:raise ValueError('Unexpected merchant')
+  if shop=='mobielnl' and not mobiel_phone(r):continue
   u=urlsplit(r['aw_deep_link']);q=parse_qs(u.query)
   if u.scheme!='https' or u.netloc!='www.awin1.com' or u.path!='/pclick.php' or q.get('a')!=['3124230'] or q.get('m')!=[cfg['mid']] or not re.fullmatch(r'\d+',q.get('p',[''])[0]):raise ValueError('Unexpected affiliate link')
   pid=q['p'][0]
@@ -70,9 +109,9 @@ def build(raw,shop,stamp=None):
   price=cb.money(r.get('search_price'));delivery=cb.money(r.get('delivery_cost'))
   if r.get('currency')!='EUR' or price is None or price<=0:price=None
   stock=r.get('in_stock')=='1'
-  category=dutch_plaza_type(r) if shop=='dutchplaza' else acer_type(r) if shop=='acer' else ((r.get('product_type') or r.get('merchant_category')) if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten'
+  category='Smartphones' if shop=='mobielnl' else dutch_plaza_type(r) if shop=='dutchplaza' else acer_type(r) if shop=='acer' else ((r.get('product_type') or r.get('merchant_category')) if shop=='coolblue' else r.get('merchant_category') or '').strip() or 'Overige producten'
   items.append([r['product_name'].strip(),(r.get('brand_name') or '').strip() or ('Acer' if shop=='acer' else 'Overige merken'),category,image,pid,price,delivery,stock])
- if len(items)<(1 if shop=='dutchplaza' else 100):raise ValueError('Incomplete feed')
+ if len(items)<(1 if cfg.get('optional') else 100):raise ValueError('Incomplete feed')
  items.sort(key=lambda p:p[0].casefold());out={};parts=[]
  for start in range(0,len(items),1000):
   payload=gzip.compress(json.dumps(items[start:start+1000],ensure_ascii=False,separators=(',',':')).encode(),mtime=0);name='catalog-'+str(start//1000).zfill(2)+'.json.gz';out[name]=payload;parts.append({'file':name,'count':len(items[start:start+1000]),'sha256':hashlib.sha256(payload).hexdigest()})
@@ -99,24 +138,24 @@ def main():
     else:
      base=(os.environ.get('AWIN_FEED_URL') or os.environ.get('AWIN_COOLBLUE_FEED_URL') or '').strip()
      if not base:raise ValueError('Feed secret is not configured')
-     url=feed_url(base,shop)
-     with build_opener(cb.SafeRedirect()).open(Request(url,headers={'User-Agent':'KoopHelder catalog updater'}),timeout=90) as response:raw=response.read(60_000_001)
+     raw=mobiel_rows(base) if shop=='mobielnl' else download(feed_url(base,shop),60_000_000)
     pending[shop]=build(raw,shop,stamp)
     raws[shop]=raw
    except Exception as exc:
     if isinstance(exc,HTTPError):
      print('Awin feed download failed for '+shop+': HTTP '+str(exc.code)+'. No private URL or token logged.',file=sys.stderr)
-    elif shop!='dutchplaza':
+    else:
      print('Catalog processing failed for '+shop+': '+type(exc).__name__+'. No private URL or token logged.',file=sys.stderr)
-    if shop!='dutchplaza':raise
-    print('Dutch Plaza feed unavailable; retained the previous catalog.',file=sys.stderr)
+    if not SHOPS[shop].get('optional'):raise
+    print(shop+' feed unavailable; retained the previous catalog.',file=sys.stderr)
   # Validate all downloads before changing any published catalog.
   prices=cb.build(raws['coolblue'],(ROOT/'index.html').read_text(),datetime.fromisoformat(stamp))
   matcher_spec=importlib.util.spec_from_file_location('matcher',ROOT/'scripts/match-shop-products.py');matcher=importlib.util.module_from_spec(matcher_spec);matcher_spec.loader.exec_module(matcher)
-  feeds={shop:read_rows(raw) for shop,raw in raws.items()}
-  matches=matcher.build({shop:rows for shop,rows in feeds.items() if shop!='dutchplaza'},SHOPS,stamp)
+  feeds={shop:read_rows(raw) if isinstance(raw,bytes) else raw for shop,raw in raws.items()}
+  if 'mobielnl' in feeds:feeds['mobielnl']=[r for r in feeds['mobielnl'] if mobiel_phone(r)]
+  matches=matcher.build({shop:rows for shop,rows in feeds.items() if not SHOPS[shop].get('optional')},SHOPS,stamp)
   groups={(g['gtin'],g['brand']):g for g in matches['groups']}
-  if 'dutchplaza' in feeds:
+  if any(SHOPS[shop].get('optional') for shop in feeds):
    groups.update(((g['gtin'],g['brand']),g) for g in matcher.build(feeds,SHOPS,stamp)['groups'])
   if a.tradetracker_match_file:
    tt_spec=importlib.util.spec_from_file_location('trade_catalogs',ROOT/'scripts/update-tradetracker-catalogs.py');trade=importlib.util.module_from_spec(tt_spec);tt_spec.loader.exec_module(trade)

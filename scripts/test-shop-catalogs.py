@@ -41,5 +41,23 @@ class AcerCatalogTests(unittest.TestCase):
   self.assertEqual(shops.acer_type({'product_name':'Acer Aspire 14 Laptop','merchant_category':'10% OFF PROMO'}),'Laptops')
   self.assertEqual(shops.acer_type({'product_name':'4 jaar garantie Laptop','merchant_category':'Accessories'}),'Accessoires')
   self.assertEqual(shops.acer_type({'product_name':'Acer Home Entertainment H5386BDi','merchant_category':'Peripherals'}),'Projectoren')
+class MobielCatalogTests(unittest.TestCase):
+ def test_only_active_awin_feeds_for_mobiel(self):
+  listing=b'Advertiser ID,Membership Status,Datafeed Format,Feed ID\n8373,active,Awin,12345\n8373,active,Google,23456\n8373,inactive,Awin,34567\n79532,active,Awin,45678\n'
+  self.assertEqual(shops.mobiel_feed_ids(listing),['12345'])
+
+ def test_only_loose_phones_are_published(self):
+  row={**ROW,'merchant_id':'8373','product_name':'Samsung Galaxy S26 256 GB',
+       'merchant_deep_link':'https://www.mobiel.nl/smartphone/samsung/galaxy-s26/los-toestel',
+       'aw_deep_link':'https://www.awin1.com/pclick.php?p=123&a=3124230&m=8373',
+       'merchant_image_url':'https://mobiel-product.imgix.net/example.jpg'}
+  products=rows(shops.build(feed(row),'mobielnl'))
+  self.assertEqual(products[0][2:4],['Smartphones',row['merchant_image_url']])
+  for destination in ('https://www.mobiel.nl/abonnement/samsung/galaxy-s26','https://mobiel.nl.evil.example/smartphone/samsung/galaxy-s26/los-toestel'):
+   with self.subTest(destination=destination),self.assertRaisesRegex(ValueError,'Incomplete feed'):
+    shops.build(feed({**row,'merchant_deep_link':destination}),'mobielnl')
+  with self.assertRaisesRegex(ValueError,'Unexpected affiliate link'):
+   shops.build(feed({**row,'aw_deep_link':row['aw_deep_link'].replace('3124230','1')}),'mobielnl')
+
 if __name__=='__main__':unittest.main()
 
