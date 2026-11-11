@@ -18,7 +18,12 @@ for(const page of ['index.html','acer.html','accessoires.html','coolblue.html','
  const html=fs.readFileSync(page,'utf8');
  assert(html.includes('/assets/acties.js"'),page+' missing promo policy');
 }
-assert(!data.promotions.some(p=>p.shop==='coolblue'),'Coolblue dates await confirmation');
+const coolblueCampaign = data.promotions.find(p => p.id === 'coolblue-black-friday-2026');
+assert(coolblueCampaign, 'Expected the announced Coolblue Black Friday campaign');
+assert.equal(coolblueCampaign.shop, 'coolblue');
+assert.equal(coolblueCampaign.source, 'awin');
+assert.equal(coolblueCampaign.startAt, '2026-11-09T00:00:00+01:00');
+assert.equal(coolblueCampaign.endAt, '2026-12-01T00:00:00+01:00');
 const blackFridayPage=fs.readFileSync('assets/black-friday-acties.js','utf8');
 assert(blackFridayPage.includes("fetch('/data/acties.json'"),'Black Friday page should use the same approved action feed');
 assert(!blackFridayPage.includes("fetch('/data/black-friday-acties.json'"),'Legacy action feed must not power live pages');
