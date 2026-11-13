@@ -1,5 +1,6 @@
 """Import the approved Dutch TradeTracker feeds; publish only validated product data."""
-import argparse,gzip,hashlib,json,math,os,re,sys
+import argparse,gzip,hashlib,json,math,os,re,sys,socket
+from urllib.error import HTTPError,URLError
 from datetime import datetime,timezone
 from pathlib import Path
 from urllib.parse import urlsplit,parse_qs
@@ -75,12 +76,17 @@ def main():
  ap.add_argument('--match-file');a=ap.parse_args();pending={};matches={};stamp=os.environ.get('KOOPHELDER_CATALOG_STAMP') or datetime.now(timezone.utc).isoformat()
  for shop,(_,fid,_,_) in SHOPS.items():
   local=getattr(a,shop+'_file')
-  if local:raw=Path(local).read_bytes()
-  else:
-   with urlopen('https://pf.tradetracker.net/?aid=518245&encoding=utf-8&type=json&fid='+fid+'&categoryType=2&additionalType=2',timeout=90) as r:raw=r.read(50000001)
-  if len(raw)>50000000:raise ValueError('Feed too large')
-  data=json.loads(raw);pending[shop]=build(data,shop,stamp)
-  if a.match_file:matches[shop]=list(match_rows(data,shop))
+  try:
+   if local:raw=Path(local).read_bytes()
+   else:
+    with urlopen('https://pf.tradetracker.net/?aid=518245&encoding=utf-8&type=json&fid='+fid+'&categoryType=2&additionalType=2',timeout=90) as r:raw=r.read(50000001)
+   if len(raw)>50000000:raise ValueError('Feed too large')
+   data=json.loads(raw);pending[shop]=build(data,shop,stamp)
+   if a.match_file:matches[shop]=list(match_rows(data,shop))
+  except (TimeoutError,socket.timeout,URLError,HTTPError) as exc:
+   # A temporary TradeTracker outage must not prevent fresh Awin catalogs.
+   # Keep the previous validated shop catalog; do not use stale matching rows.
+   print('TradeTracker '+shop+' unavailable ('+type(exc).__name__+'); retaining existing catalog and continuing.',file=sys.stderr)
  for shop,outputs in pending.items():
   target=ROOT/'data'/shop;target.mkdir(parents=True,exist_ok=True)
   for name,raw in outputs.items():(target/name).write_bytes(raw)
