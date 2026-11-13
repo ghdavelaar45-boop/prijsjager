@@ -190,8 +190,10 @@ def main():
   if a.tradetracker_match_file:
    tt_spec=importlib.util.spec_from_file_location('trade_catalogs',ROOT/'scripts/update-tradetracker-catalogs.py');trade=importlib.util.module_from_spec(tt_spec);tt_spec.loader.exec_module(trade)
    candidates=json.loads(Path(a.tradetracker_match_file).read_text())
-   feeds.update({shop:candidates[shop] for shop in trade.SHOPS})
-   groups.update(((g['gtin'],g['brand']),g) for g in matcher.build(feeds,SHOPS,stamp,trade.valid_link)['groups'])
+   available_trade={shop:candidates[shop] for shop in trade.SHOPS if shop in candidates}
+   if available_trade:
+    feeds.update(available_trade)
+    groups.update(((g['gtin'],g['brand']),g) for g in matcher.build(feeds,SHOPS,stamp,trade.valid_link)['groups'])
   matches['groups']=[groups[k] for k in sorted(groups)]
   for shop,outputs in pending.items():write(outputs,shop);m=json.loads(outputs['manifest.json']);print(shop+': '+str(m['count'])+' products, '+str(m['withPrices'])+' prices, '+str(m['withImages'])+' photos')
   (ROOT/'coolblue-prices.json').write_text(json.dumps(prices,ensure_ascii=False,separators=(',',':'))+'\n')
