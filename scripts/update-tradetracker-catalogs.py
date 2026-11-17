@@ -6,7 +6,9 @@ from pathlib import Path
 from urllib.parse import urlsplit,parse_qs
 from urllib.request import urlopen
 ROOT=Path(__file__).resolve().parents[1]
-SHOPS={'hobo':('37535','2232033','www.hobo.nl','/tradetracker-redirect/'),'yorcom':('4837','253916','www.yorcom.nl','/shopping/')}
+SHOPS={'hobo':('37535','2232033','www.hobo.nl','/tradetracker-redirect/'),'yorcom':('4837','253916','www.yorcom.nl','/shopping/'),'ep':('16964', '1944992', 'www.ep.nl', '/trade/'),'expert':('5515', '254727', 'www.expert.nl', '/tt/'),'bax':('1687', '2090520', 'www.bax-shop.nl', '/tradetracker/')}
+IMAGE_HOSTS={'ep': 'cdn.electronicpartner.io', 'expert': 'www.expert.nl', 'bax': 'static.bax-shop.nl'}
+TARGET_HOSTS={'ep':{'www.ep.nl','ep.nl'}}
 SPECIAL_STOCK=re.compile(
  r'\b(?:refurb(?:ished)?|tweedehands|tweedekans|gebruikt|used|renewed|outlet|buitenkans|'
  r'demo(?:[ -]?model)?|show(?:room)?[ -]?model|open[ -]?box|retour[ -]?deal|b[ -]?stock|occasion|verhuur)\b',re.I)
@@ -20,9 +22,9 @@ def prop(p,k,default=''):
  return str(v[0]).strip() if isinstance(v,list) and v else default
 def valid_link(url,shop):
  campaign,fid,host,path=SHOPS[shop];u=urlsplit(url);q=parse_qs(u.query)
- if u.scheme!='https' or u.netloc!=host or u.path!=path or q.get('tt')!=[campaign+'_'+fid+'_518245_']:return False
+ if u.scheme!='https' or u.netloc!=host or u.path!=path or q.get('tt')!=[campaign+'_'+fid+'_518245_'] or len(q.get('r',[]))!=1:return False
  target=urlsplit(q.get('r',[''])[0])
- return target.scheme=='https' and target.netloc==host and not target.username and not target.password
+ return target.scheme=='https' and target.netloc in TARGET_HOSTS.get(shop,{host}) and not target.username and not target.password
 def catalog_id(shop,product_id):
  return str(1000000000000000+int(hashlib.sha256((shop+':'+str(product_id)).encode()).hexdigest()[:12],16))
 
@@ -53,20 +55,21 @@ def build(data,shop,stamp=None):
   pid=catalog_id(shop,p['ID'])
   if pid in seen:raise ValueError('Duplicate product identity')
   seen.add(pid);image=''
-  for candidate in p.get('images',[]):
+  for candidate in p.get('images',[])+[prop(p,'imageURL_large')]:
    u=urlsplit(candidate)
-   if u.scheme=='https' and u.netloc==host and not u.username and not u.password:image=candidate;break
+   if u.scheme=='https' and u.netloc==IMAGE_HOSTS.get(shop,host) and not u.username and not u.password:image=candidate;break
   price=money(p.get('price',{}).get('amount')) if p.get('price',{}).get('currency')=='EUR' else None
   if price==0:price=None
   category=prop(p,'categoryPath') or prop(p,'subcategories') or 'Overige producten'
   # Merchant category paths retain actual product types rather than guessed specifications.
-  category=re.split(r'\s*>\s*|\s*/\s*',category)[-1].strip() or 'Overige producten'
+  category=next((part.strip() for part in reversed(re.split(r'\s*[>|/]\s*',category)) if part.strip()),'Overige producten')
   stock=prop(p,'stock').lower() in {'ja','yes','1','in stock','op voorraad','true'}
   items.append([str(p.get('name','')).strip(),prop(p,'brand','Overige merken'),category,image,pid,price,money(prop(p,'deliveryCosts_NL') or prop(p,'deliveryCosts')),stock,p['URL']])
  if any(not p[0] for p in items):raise ValueError('Missing product name')
  items.sort(key=lambda p:p[0].casefold());out={};files=[]
- for start in range(0,len(items),1000):
-  raw=gzip.compress(json.dumps(items[start:start+1000],ensure_ascii=False,separators=(',',':')).encode(),mtime=0);name='catalog-'+str(start//1000).zfill(2)+'.json.gz';out[name]=raw;files.append({'file':name,'count':len(items[start:start+1000]),'sha256':hashlib.sha256(raw).hexdigest()})
+ chunk_size=10000 if shop=='bax' else 1000
+ for start in range(0,len(items),chunk_size):
+  raw=gzip.compress(json.dumps(items[start:start+chunk_size],ensure_ascii=False,separators=(',',':')).encode(),mtime=0);name='catalog-'+str(start//chunk_size).zfill(2)+'.json.gz';out[name]=raw;files.append({'file':name,'count':len(items[start:start+chunk_size]),'sha256':hashlib.sha256(raw).hexdigest()})
  stamp=stamp or datetime.now(timezone.utc).isoformat()
  out['manifest.json']=json.dumps({'schema':2,'network':'tradetracker','merchantId':campaign,'publisherId':'518245','fetchedAt':stamp,'maxAgeHours':48,'count':len(items),'withPrices':sum(p[5] is not None for p in items),'withImages':sum(bool(p[3]) for p in items),'files':files},separators=(',',':')).encode()
  return out
@@ -79,8 +82,8 @@ def main():
   try:
    if local:raw=Path(local).read_bytes()
    else:
-    with urlopen('https://pf.tradetracker.net/?aid=518245&encoding=utf-8&type=json&fid='+fid+'&categoryType=2&additionalType=2',timeout=90) as r:raw=r.read(50000001)
-   if len(raw)>50000000:raise ValueError('Feed too large')
+    with urlopen('https://pf.tradetracker.net/?aid=518245&encoding=utf-8&type=json&fid='+fid+'&categoryType=2&additionalType=2',timeout=90) as r:raw=r.read(100000001)
+   if len(raw)>100000000:raise ValueError('Feed too large')
    data=json.loads(raw);pending[shop]=build(data,shop,stamp)
    if a.match_file:matches[shop]=list(match_rows(data,shop))
   except (TimeoutError,socket.timeout,URLError,HTTPError) as exc:

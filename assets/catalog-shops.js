@@ -6,12 +6,15 @@ const shops={
  coolblue:{dir:'coolblue',name:'Coolblue',merchant:'85161',publisher:'3124230',network:'awin',prefix:'cb',images:['image.coolblue.nl','coolblue.bynder.com']},
  acer:{dir:'acer',name:'Acer',merchant:'17133',publisher:'3124230',network:'awin',prefix:'ac',images:['static2-ecemea.acer.com']},
  hobo:{dir:'hobo',name:'Hobo.nl',merchant:'37535',publisher:'518245',network:'tradetracker',host:'www.hobo.nl',path:'/tradetracker-redirect/',feed:'2232033',images:['www.hobo.nl']},
+ ep:{"dir":"ep","name":"EP.nl","merchant":"16964","publisher":"518245","network":"tradetracker","host":"www.ep.nl","path":"/trade/","feed":"1944992","images":["cdn.electronicpartner.io"],"targets":["www.ep.nl","ep.nl"]},
+ expert:{"dir":"expert","name":"Expert.nl","merchant":"5515","publisher":"518245","network":"tradetracker","host":"www.expert.nl","path":"/tt/","feed":"254727","images":["www.expert.nl"],"targets":["www.expert.nl","www.expert.nl"]},
+ bax:{"dir":"bax","name":"Bax Music","merchant":"1687","publisher":"518245","network":"tradetracker","host":"www.bax-shop.nl","path":"/tradetracker/","feed":"2090520","images":["static.bax-shop.nl"],"targets":["www.bax-shop.nl","www.bax-shop.nl"]},
  yorcom:{dir:'yorcom',name:'Yorcom.nl',merchant:'4837',publisher:'518245',network:'tradetracker',host:'www.yorcom.nl',path:'/shopping/',feed:'253916',images:['www.yorcom.nl']}
 };
 function validManifest(m,c){return [1,2].includes(m.schema)&&m.merchantId===c.merchant&&m.publisherId===c.publisher&&(c.network==='tradetracker'?m.network==='tradetracker'&&m.schema===2:!m.network||m.network==='awin')&&Array.isArray(m.files)&&m.files.length>0&&m.files.length<=100;}
 function validTracking(value,c){
  try{const u=new URL(value),q=u.searchParams;if(c.network!=='tradetracker'||u.protocol!=='https:'||u.host!==c.host||u.username||u.password||u.pathname!==c.path||q.getAll('tt').length!==1||q.get('tt')!==c.merchant+'_'+c.feed+'_'+c.publisher+'_'||q.getAll('r').length!==1)return false;
- const target=new URL(q.get('r'));return target.protocol==='https:'&&target.host===c.host&&!target.username&&!target.password;
+ const target=new URL(q.get('r'));return target.protocol==='https:'&&(c.targets||[c.host]).includes(target.host)&&!target.username&&!target.password;
  }catch{return false;}
 }
 function productLink(p,c,norm){
