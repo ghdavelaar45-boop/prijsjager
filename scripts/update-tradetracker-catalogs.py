@@ -67,7 +67,7 @@ def build(data,shop,stamp=None):
   items.append([str(p.get('name','')).strip(),prop(p,'brand','Overige merken'),category,image,pid,price,money(prop(p,'deliveryCosts_NL') or prop(p,'deliveryCosts')),stock,p['URL']])
  if any(not p[0] for p in items):raise ValueError('Missing product name')
  items.sort(key=lambda p:p[0].casefold());out={};files=[]
- chunk_size=10000 if shop=='bax' else 1000
+ chunk_size=5000 if shop=='bax' else 1000
  for start in range(0,len(items),chunk_size):
   raw=gzip.compress(json.dumps(items[start:start+chunk_size],ensure_ascii=False,separators=(',',':')).encode(),mtime=0);name='catalog-'+str(start//chunk_size).zfill(2)+'.json.gz';out[name]=raw;files.append({'file':name,'count':len(items[start:start+chunk_size]),'sha256':hashlib.sha256(raw).hexdigest()})
  stamp=stamp or datetime.now(timezone.utc).isoformat()
