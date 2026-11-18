@@ -71,9 +71,10 @@
       "source": "awin",
       "approved": true,
       "title": "Acer: extra korting op Black Friday-prijzen",
-      "detail": "Acer kondigt extra korting aan op geselecteerde Black Friday-artikelen. Controleer de actuele actievoorwaarden en uiteindelijke prijs bij Acer. De promotiecode wordt hier niet getoond zolang de voorwaarden voor publicatie op KoopHelder niet apart bevestigd zijn.",
+      "detail": "Extra korting op geselecteerde Acer Black Friday-prijzen met code BONUS. Geldig van 20 november 15:00 tot 24 november 09:00. Controleer bij Acer welke artikelen meedoen en wat de uiteindelijke winkelwagenprijs is.",
       "startAt": "2026-11-20T15:00:00+01:00",
-      "endAt": "2026-11-24T09:00:00+01:00"
+      "endAt": "2026-11-24T09:00:00+01:00",
+      "code": "BONUS"
     },
     {
       "id": "acer-black-friday-nov26-2026",
