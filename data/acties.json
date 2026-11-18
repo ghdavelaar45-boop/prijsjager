@@ -64,6 +64,36 @@
       "detail": "Van 9 t/m 30 november staan geselecteerde Nederlandse Black Friday-deals bij Coolblue. Bekijk via KoopHelder het assortiment en vergelijk de actuele winkelprijzen en voorraad. Geen kortingscodes.",
       "startAt": "2026-11-09T00:00:00+01:00",
       "endAt": "2026-12-01T00:00:00+01:00"
+    },
+    {
+      "id": "acer-bonus-black-friday-2026",
+      "shop": "acer",
+      "source": "awin",
+      "approved": true,
+      "title": "Acer: extra korting op Black Friday-prijzen",
+      "detail": "Acer kondigt extra korting aan op geselecteerde Black Friday-artikelen. Controleer de actuele actievoorwaarden en uiteindelijke prijs bij Acer. De promotiecode wordt hier niet getoond zolang de voorwaarden voor publicatie op KoopHelder niet apart bevestigd zijn.",
+      "startAt": "2026-11-20T15:00:00+01:00",
+      "endAt": "2026-11-24T09:00:00+01:00"
+    },
+    {
+      "id": "acer-black-friday-nov26-2026",
+      "shop": "acer",
+      "source": "awin",
+      "approved": true,
+      "title": "Acer Black Friday: tot 50% korting",
+      "detail": "Van 26 tot 30 november op geselecteerde laptops, desktops, monitoren, gamingproducten en accessoires. Korting wordt bij Acer automatisch in de winkelwagen verwerkt. Controleer daar de actuele prijs en beschikbaarheid.",
+      "startAt": "2026-11-26T12:00:00+01:00",
+      "endAt": "2026-11-30T08:00:00+01:00"
+    },
+    {
+      "id": "acer-cyber-monday-2026",
+      "shop": "acer",
+      "source": "awin",
+      "approved": true,
+      "title": "Acer Cyber Monday: tot 50% korting",
+      "detail": "Op geselecteerde laptops, desktops, monitoren, gamingproducten en accessoires. Korting wordt bij Acer automatisch in de winkelwagen verwerkt. Controleer daar de actuele prijs en beschikbaarheid.",
+      "startAt": "2026-11-30T08:00:00+01:00",
+      "endAt": "2026-12-01T09:00:00+01:00"
     }
   ]
 }
