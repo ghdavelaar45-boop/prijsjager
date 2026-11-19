@@ -32,7 +32,7 @@ function render(promotions){
    const card=el('article',undefined,'deal');
    card.append(el('span',group,'state'),el('h3',offer.title),el('p',offer.detail));
    card.append(el('p','Geldig: '+fmt(offer.startAt)+' t/m '+fmt(Date.parse(offer.endAt)-60000)+' (Nederlandse tijd)','period'));
-   if(offer.code)card.append(el('p','Kortingscode: '+offer.code,'code'));
+   if(group==='Actief'&&offer.code)card.append(el('p','Kortingscode: '+offer.code,'code'));
    card.append(el('p','Bron: officiële '+(offer.source==='awin'?'Awin':'TradeTracker')+'-melding','source'));
    const a=el('a','Bekijk het assortiment bij '+shop.name);a.href=shop.href;a.className='button';card.append(a);section.append(card);
   }
