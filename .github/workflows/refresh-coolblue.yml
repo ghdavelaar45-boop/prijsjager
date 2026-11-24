@@ -1,4 +1,4 @@
-name: Refresh Coolblue, Smartphonehoesjes and Acer catalogs
+name: Refresh KoopHelder Awin and TradeTracker catalogs
 on:
   workflow_dispatch:
   push:
