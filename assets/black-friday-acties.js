@@ -4,6 +4,7 @@
 (async()=>{
 const status=document.getElementById('actieStatus'),list=document.getElementById('actieLijst');
 const shops={
+ expert:{name:'Expert.nl',href:'/expert.html'},
  acer:{name:'Acer',href:'/acer.html'},
  smartphonehoesjes:{name:'Smartphonehoesjes.nl',href:'/accessoires.html'},
  coolblue:{name:'Coolblue',href:'/coolblue.html'},
@@ -44,8 +45,9 @@ try{
  const res=await fetch('/data/acties.json',{cache:'no-store'});if(!res.ok)throw Error('Actiebestand niet bereikbaar');
  const data=await res.json();
  if(!data||data.schema!==1||!Array.isArray(data.promotions)||data.promotions.length>100||!data.promotions.every(valid))throw Error('Ongeldige actiegegevens');
- render(data.promotions);
- setInterval(()=>render(data.promotions),60000);
- document.addEventListener('visibilitychange',()=>render(data.promotions));
+ const offers=data.promotions.filter(x=>x.shop!=='expert'||(x.source==='tradetracker'&&!x.code));
+ render(offers);
+ setInterval(()=>render(offers),60000);
+ document.addEventListener('visibilitychange',()=>render(offers));
 }catch{status.textContent='Acties zijn tijdelijk niet beschikbaar. Raadpleeg de winkels voor actuele voorwaarden.';list.replaceChildren();}
 })();
