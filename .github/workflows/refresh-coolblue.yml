@@ -15,9 +15,13 @@ on:
       - scripts/update-shop-catalogs.py
       - scripts/match-shop-products.py
       - scripts/publish-shop-catalogs.py
+      - scripts/catalog-refresh-due.py
+      - scripts/test-catalog-refresh-due.py
       - .github/workflows/refresh-coolblue.yml
   schedule:
-    - cron: '23 */6 * * *'
+    # Check hourly so a delayed GitHub schedule gets another chance sooner.
+    # The freshness gate keeps actual catalog downloads six hours apart.
+    - cron: '17 * * * *'
 permissions:
   contents: read
 concurrency:
@@ -34,7 +38,13 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+      - name: Check catalog freshness
+        id: freshness
+        run: |
+          python3 scripts/test-catalog-refresh-due.py
+          python3 scripts/catalog-refresh-due.py --github-output "$GITHUB_OUTPUT"
       - name: Verify website and feed security
+        if: steps.freshness.outputs.due == 'true'
         run: |
           python3 scripts/update-security-policy.py --check
           python3 scripts/test-security.py
@@ -45,6 +55,7 @@ jobs:
           node scripts/test-catalog-shops.cjs
           node scripts/test-acties.cjs
       - name: Refresh Awin and TradeTracker catalogs
+        if: steps.freshness.outputs.due == 'true'
         env:
           AWIN_FEED_URL: ${{ secrets.AWIN_COOLBLUE_FEED_URL }}
         run: |
@@ -52,6 +63,7 @@ jobs:
           python3 scripts/update-tradetracker-catalogs.py --match-file "$RUNNER_TEMP/koophelder-trade-matches.json"
           python3 scripts/update-shop-catalogs.py --tradetracker-match-file "$RUNNER_TEMP/koophelder-trade-matches.json"
       - name: Publish validated catalogs atomically
+        if: steps.freshness.outputs.due == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/publish-shop-catalogs.py
